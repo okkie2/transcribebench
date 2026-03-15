@@ -65,6 +65,15 @@ python -m transcribebench.cli run-benchmark
 python -m transcribebench.cli report
 ```
 
+## 🧩 Submodule setup
+This project uses `whisper.cpp` as a git submodule (under `third_party/whisper.cpp`) to keep the outer repo clean.
+
+If you clone the repo fresh, initialize and update the submodule before running the benchmark:
+
+```bash
+git submodule update --init --recursive
+```
+
 ## 📌 Notes
 - This repo is intentionally **not** trying to be an exhaustive benchmark suite.
 - The focus is on **practical reproducibility**, so we keep the first release narrow and clear.
