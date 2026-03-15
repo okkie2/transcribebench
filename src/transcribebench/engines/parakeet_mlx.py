@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import wave
+from importlib.util import find_spec
 from pathlib import Path
 from typing import List, Optional
 
@@ -34,31 +35,32 @@ class ParakeetMlxEngine(EngineAdapter):
 
     def check_requirements(self) -> List[str]:
         missing: List[str] = []
-        try:
-            import mlx  # noqa: F401
-        except ImportError:
+        # Import-spec checks only: avoid triggering MLX device init in menu availability checks.
+        if find_spec("mlx") is None:
             missing.append("Install MLX: pip install mlx")
-
-        try:
-            import mlx_parakeet  # noqa: F401
-        except ImportError:
-            missing.append("Install Parakeet MLX runtime: pip install mlx-parakeet")
+        if find_spec("parakeet_mlx") is None:
+            missing.append("Install Parakeet MLX runtime: pip install parakeet-mlx")
 
         return missing
+
+    @staticmethod
+    def _is_mlx_env_init_failure(error: Exception) -> bool:
+        msg = str(error)
+        return "NSRangeException" in msg or "libmlx" in msg or "Metal" in msg
 
     def _ensure_model_loaded(self, model: str) -> None:
         if self._model is not None and self._model_name == model:
             return
 
         try:
-            import mlx_parakeet
+            import parakeet_mlx
 
-            self._module = mlx_parakeet
+            self._module = parakeet_mlx
             # Keep this adapter tolerant to small API differences across versions.
-            if hasattr(mlx_parakeet, "from_pretrained"):
-                self._model = mlx_parakeet.from_pretrained(model)
-            elif hasattr(mlx_parakeet, "ParakeetModel") and hasattr(mlx_parakeet.ParakeetModel, "from_pretrained"):
-                self._model = mlx_parakeet.ParakeetModel.from_pretrained(model)
+            if hasattr(parakeet_mlx, "from_pretrained"):
+                self._model = parakeet_mlx.from_pretrained(model)
+            elif hasattr(parakeet_mlx, "ParakeetModel") and hasattr(parakeet_mlx.ParakeetModel, "from_pretrained"):
+                self._model = parakeet_mlx.ParakeetModel.from_pretrained(model)
             else:
                 # Some builds expose only a top-level transcribe API.
                 self._model = None
@@ -110,6 +112,7 @@ class ParakeetMlxEngine(EngineAdapter):
             )
         except Exception as e:
             elapsed = time.time() - start
+            error_message = "MLX unusable in current execution environment" if self._is_mlx_env_init_failure(e) else str(e)
             return EngineResult(
                 engine=self.engine_name,
                 model=model,
@@ -118,5 +121,5 @@ class ParakeetMlxEngine(EngineAdapter):
                 transcript="",
                 elapsed_seconds=elapsed,
                 real_time_factor=None,
-                info={"error": str(e), "model": model, "language": language},
+                info={"error": error_message, "model": model, "language": language},
             )

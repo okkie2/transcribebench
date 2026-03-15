@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import wave
+from importlib.util import find_spec
 from pathlib import Path
 from typing import List, Optional
 
@@ -30,12 +31,12 @@ class MlxWhisperEngine(EngineAdapter):
 
     def check_requirements(self) -> List[str]:
         missing: List[str] = []
-        try:
-            import mlx_whisper  # noqa: F401
-        except ImportError:
+        # Import-spec checks only: avoid triggering MLX device init in menu availability checks.
+        if find_spec("mlx") is None:
+            missing.append("Install MLX: pip install mlx")
+        if find_spec("mlx_whisper") is None:
             missing.append("Install mlx-whisper: pip install mlx-whisper")
 
-        # We can't validate the model until runtime, so only warn about missing dependency.
         return missing
 
     def transcribe(self, audio_path: str | Path, model: str, language: str, **kwargs) -> EngineResult:
