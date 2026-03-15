@@ -47,6 +47,12 @@ def _check_requirements_safe(engine: str) -> list[str]:
         text=True,
     )
     if proc.returncode != 0:
+        stderr = (proc.stderr or "").strip()
+        if "NSRangeException" in stderr and "libmlx" in stderr:
+            return ["MLX unusable in this environment (Metal device initialization crash: NSRangeException)"]
+        if stderr:
+            first_line = stderr.splitlines()[0]
+            return [f"requirement check crashed (exit code {proc.returncode}): {first_line}"]
         return [f"requirement check crashed (exit code {proc.returncode})"]
     try:
         payload = json.loads(proc.stdout.strip() or "{}")
@@ -146,26 +152,39 @@ def _check_dataset_state(config: Config) -> tuple[str, str]:
     samples_dir = Path(config.output.dataset_cache) / config.language
     metadata_path = samples_dir / "metadata.json"
     if not metadata_path.exists():
-        return "missing", "dataset metadata not found"
+        return "missing", "Dataset cache missing: metadata file not found"
 
     try:
         with metadata_path.open("r", encoding="utf-8") as f:
             raw = json.load(f)
     except Exception:
-        return "stale", "dataset metadata is unreadable"
+        return "mismatch", "Dataset cache does not match current configuration. Reason: metadata file is unreadable"
 
     meta = raw.get("_meta", {}) if isinstance(raw, dict) else {}
-    if meta.get("sample_size") != config.dataset.sample_size or meta.get("seed") != config.dataset.seed:
-        return "stale", "sample size or seed differs from current config"
+    reasons: list[str] = []
+    cached_sample_size = meta.get("sample_size")
+    cached_seed = meta.get("seed")
+    cached_url = meta.get("url")
+
+    if cached_sample_size != config.dataset.sample_size:
+        reasons.append(f"sample size changed from {cached_sample_size} to {config.dataset.sample_size}")
+    if cached_seed != config.dataset.seed:
+        reasons.append(f"seed changed from {cached_seed} to {config.dataset.seed}")
+    # URL often encodes dataset version; report it as dataset source/version mismatch.
+    if cached_url is not None and cached_url != config.dataset.url:
+        reasons.append("dataset source/version URL changed")
+
+    if reasons:
+        return "mismatch", "Dataset cache does not match current configuration. Reason: " + "; ".join(reasons)
 
     samples = raw.get("samples", []) if isinstance(raw, dict) else []
     if not samples:
-        return "stale", "no samples in cache"
+        return "mismatch", "Dataset cache does not match current configuration. Reason: no samples in cache"
 
     for s in samples:
         p = Path(s.get("audio_path", ""))
         if not p.exists() or p.stat().st_size == 0:
-            return "stale", "cached audio files are missing or empty"
+            return "mismatch", "Dataset cache does not match current configuration. Reason: cached audio files are missing or empty"
     return "ready", "cache matches current config"
 
 
