@@ -8,7 +8,7 @@
 #   make report     - generate report (uses config/default.yaml)
 #   make clean      - remove generated artifacts/cache
 
-.PHONY: setup submodule build-whispercpp fetch run bench menu report clean
+.PHONY: setup submodule build-whispercpp build-apple-speech-helper fetch run bench menu report clean
 
 PYTHON := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || echo python)
 CONFIG := config/default.yaml
@@ -20,6 +20,11 @@ submodule:
 
 build-whispercpp:
 	cd third_party/whisper.cpp && make
+
+build-apple-speech-helper:
+	mkdir -p .cache/apple_speech .cache/swift-module-cache
+	SWIFT_MODULECACHE_PATH=$(PWD)/.cache/swift-module-cache \
+	swiftc -parse-as-library -O -o .cache/apple_speech/apple-speech-cli tools/apple_speech_cli.swift
 
 fetch:
 	$(PYTHON) -m transcribebench.cli --config $(CONFIG) refresh-dataset

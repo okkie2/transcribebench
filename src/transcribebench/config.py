@@ -34,11 +34,13 @@ class OutputConfig:
 
 def _default_engines() -> list[EngineSpec]:
     return [
+        EngineSpec(engine="apple_dictation", model="nl-NL", enabled=False),
+        EngineSpec(engine="apple_speech", model="nl-NL", enabled=False),
         EngineSpec(engine="mlx_whisper", model="openai/whisper-small", enabled=True),
         EngineSpec(engine="faster_whisper", model="openai/whisper-small", enabled=True),
         EngineSpec(engine="faster_whisper_large", model="openai/whisper-large-v3", enabled=True),
         EngineSpec(engine="whisper_cpp", model="small", enabled=True),
-        EngineSpec(engine="parakeet_mlx", model="parakeet-ctc-1.1b", enabled=False),
+        EngineSpec(engine="parakeet_mlx", model="mlx-community/parakeet-tdt-0.6b-v3", enabled=False),
     ]
 
 
@@ -103,6 +105,8 @@ class Config:
         #   mlx_whisper: { enabled: true, model: ... }
         if isinstance(engines_raw, dict):
             legacy_to_engine = {
+                "apple_dictation": "apple_dictation",
+                "apple_speech": "apple_speech",
                 "mlx_whisper": "mlx_whisper",
                 "faster_whisper": "faster_whisper",
                 "faster_whisper_large": "faster_whisper_large",

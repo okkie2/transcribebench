@@ -12,12 +12,21 @@ from typing import Any
 
 import yaml
 from .config import Config
-from .engines import FasterWhisperEngine, MlxWhisperEngine, ParakeetMlxEngine, WhisperCppEngine
+from .engines import (
+    AppleDictationEngine,
+    AppleSpeechEngine,
+    FasterWhisperEngine,
+    MlxWhisperEngine,
+    ParakeetMlxEngine,
+    WhisperCppEngine,
+)
 from .runner import BenchmarkRunner
 
 
 def _adapter_mapping():
     return {
+        "apple_dictation": AppleDictationEngine(),
+        "apple_speech": AppleSpeechEngine(),
         "mlx_whisper": MlxWhisperEngine(),
         "faster_whisper": FasterWhisperEngine("faster_whisper"),
         "faster_whisper_large": FasterWhisperEngine("faster_whisper_large"),
@@ -328,6 +337,8 @@ def _interactive_set_sample_size(config_path: str) -> None:
 
 def _interactive_select_engines(config_path: str) -> None:
     hints = {
+        "apple_dictation": "Apple DictationTranscriber (macOS 26+)",
+        "apple_speech": "Apple Speech framework (macOS 26+)",
         "mlx_whisper": "Apple Silicon optimized (MLX)",
         "faster_whisper": "Fast CTranslate2 backend",
         "faster_whisper_large": "Large-model faster-whisper",

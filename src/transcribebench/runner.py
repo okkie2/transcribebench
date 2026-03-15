@@ -7,14 +7,56 @@ import json
 import pathlib
 import time
 import os
+import subprocess
 from datetime import datetime, timezone
 from collections import defaultdict
-from typing import List
+from typing import List, Optional
 
 from .config import Config
 from .dataset.common_voice import CommonVoiceProvider, CommonVoiceSample
 from .engines import EngineAdapter, EngineResult
 from .report import Reporter
+
+
+def _audio_duration_seconds(path: str | pathlib.Path) -> Optional[float]:
+    audio_path = pathlib.Path(path)
+
+    try:
+        import wave
+
+        with wave.open(str(audio_path), "rb") as w:
+            frames = w.getnframes()
+            rate = w.getframerate()
+            return frames / float(rate)
+    except Exception:
+        pass
+
+    ffprobe = "ffprobe"
+    try:
+        proc = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(audio_path),
+            ],
+            capture_output=True,
+            text=True,
+        )
+    except Exception:
+        return None
+
+    if proc.returncode != 0:
+        return None
+
+    try:
+        return float((proc.stdout or "").strip())
+    except ValueError:
+        return None
 
 
 def _simple_wer(ref: str, hyp: str) -> float:
@@ -83,6 +125,14 @@ class BenchmarkRunner:
             size=self.config.dataset.sample_size,
             seed=self.config.dataset.seed,
             url=self.config.dataset.url,
+        )
+        total_audio_seconds = sum(
+            duration for sample in samples for duration in [_audio_duration_seconds(sample.audio_path)] if duration is not None
+        )
+        dataset_name = (
+            f"Mozilla Common Voice ({self.config.language})"
+            if self.config.dataset.provider == "common_voice"
+            else f"{self.config.dataset.provider} ({self.config.language})"
         )
 
         results: list[dict] = []
@@ -171,6 +221,9 @@ class BenchmarkRunner:
         output = {
             "run": {
                 "started_at_utc": run_started_at_utc,
+                "dataset_name": dataset_name,
+                "sample_size": self.config.dataset.sample_size,
+                "total_audio_seconds": total_audio_seconds,
             },
             "config": {
                 "language": self.config.language,
