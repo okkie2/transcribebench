@@ -11,7 +11,7 @@ from typing import Any
 
 import yaml
 from .config import Config
-from .engines import FasterWhisperEngine, MlxWhisperEngine, ParakeetCtcEngine, WhisperCppEngine
+from .engines import FasterWhisperEngine, MlxWhisperEngine, ParakeetMlxEngine, WhisperCppEngine
 from .runner import BenchmarkRunner
 
 
@@ -21,7 +21,7 @@ def _adapter_mapping():
         "faster_whisper": FasterWhisperEngine("faster_whisper"),
         "faster_whisper_large": FasterWhisperEngine("faster_whisper_large"),
         "whisper_cpp": WhisperCppEngine(),
-        "nemo_ctc": ParakeetCtcEngine(),
+        "parakeet_mlx": ParakeetMlxEngine(),
     }
 
 
@@ -311,7 +311,7 @@ def _interactive_select_engines(config_path: str) -> None:
         "faster_whisper": "Fast CTranslate2 backend",
         "faster_whisper_large": "Large-model faster-whisper",
         "whisper_cpp": "Portable whisper.cpp backend",
-        "nemo_ctc": "NVIDIA NeMo CTC runtime",
+        "parakeet_mlx": "Parakeet on MLX (Apple Silicon)",
     }
 
     while True:

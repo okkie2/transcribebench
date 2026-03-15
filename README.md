@@ -60,12 +60,14 @@ engines:
   - engine: mlx_whisper
     model: whisper-large-v3
     enabled: true
-  - engine: nemo_ctc
-    model: nvidia/parakeet-ctc-1.1b
+  - engine: parakeet_mlx
+    model: parakeet-ctc-1.1b
     enabled: true
 ```
 
 Reports include separate columns for `engine`, `model`, `WER`, `CER`, and `time_seconds`.
+
+Parakeet support in this project is Apple Silicon local-only via `parakeet_mlx` (MLX runtime).
 
 ---
 

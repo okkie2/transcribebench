@@ -38,7 +38,7 @@ def _default_engines() -> list[EngineSpec]:
         EngineSpec(engine="faster_whisper", model="openai/whisper-small", enabled=True),
         EngineSpec(engine="faster_whisper_large", model="openai/whisper-large-v3", enabled=True),
         EngineSpec(engine="whisper_cpp", model="small", enabled=True),
-        EngineSpec(engine="nemo_ctc", model="nvidia/parakeet-ctc-1.1b", enabled=False),
+        EngineSpec(engine="parakeet_mlx", model="parakeet-ctc-1.1b", enabled=False),
     ]
 
 
@@ -107,8 +107,9 @@ class Config:
                 "faster_whisper": "faster_whisper",
                 "faster_whisper_large": "faster_whisper_large",
                 "whisper_cpp": "whisper_cpp",
-                "parakeet_ctc_1_1b": "nemo_ctc",
-                "nemo_ctc": "nemo_ctc",
+                "parakeet_ctc_1_1b": "parakeet_mlx",
+                "nemo_ctc": "parakeet_mlx",
+                "parakeet_mlx": "parakeet_mlx",
             }
             parsed: list[EngineSpec] = []
             for key, value in engines_raw.items():
