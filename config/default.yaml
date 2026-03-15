@@ -16,13 +16,13 @@ engines:
   enabled: true
 - engine: faster_whisper
   model: guillaumekln/faster-whisper-small
-  enabled: false
+  enabled: true
 - engine: faster_whisper_large
   model: guillaumekln/faster-whisper-large-v2
-  enabled: false
+  enabled: true
 - engine: whisper_cpp
   model: large-v1
-  enabled: false
+  enabled: true
 - engine: parakeet_mlx
   model: mlx-community/parakeet-tdt-0.6b-v3
   enabled: false
