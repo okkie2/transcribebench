@@ -1,79 +1,266 @@
+Below is a **complete updated README** incorporating:
+
+* clearer onboarding
+* the privacy motivation
+* the relationship with **AutoTranscribe2**
+* Mozilla Common Voice credit
+* dataset reproducibility guidance
+* improved structure
+
+---
+
 # TranscribeBench
 
-A reproducible local benchmark tool for comparing Dutch transcription setups on Apple Silicon.
+**TranscribeBench** is a benchmarking tool for speech-to-text engines.
 
-## 🎯 Goal
-Build a **reproducible local benchmark** that compares serious, practical large-model transcription setups — starting with a **Metal/MLX Whisper baseline** and a handful of challenger engines — on a fixed Dutch Common Voice subset.
+It runs multiple transcription engines on the same audio dataset and compares their output against ground-truth transcripts using objective metrics such as **Word Error Rate (WER)** and **Character Error Rate (CER)**.
 
-## ✅ Scope (v1)
-- **Language:** Dutch (`nl`) only
-- **Dataset:** reproducible subset from Mozilla Common Voice (cached locally)
-- **Engines:**
-  - `mlx-whisper` / Metal (baseline)
-  - `faster-whisper`
-  - `whisper.cpp`
-- **Benchmark outputs:**
-  - WER, CER, runtime, real-time factor, failures
-  - Markdown, JSON, CSV reports
-- **Design:**
-  - modular pipeline (dataset provider, engine adapters, runner, report generator)
-  - configuration via file (no hard-coded values)
-  - CLI with `setup`, `fetch-dataset`, `run-benchmark`, `report`
+The goal is simple: **determine which engine and model performs best for your language, dataset, and hardware.**
 
-## 🧩 Project layout
-- `src/transcribebench/` — source code
-- `config.yaml` — example configuration (YAML preferred)
-- `TODO.md` — roadmap + next steps
-- `tests/` — unit tests for core logic
+---
 
-## 🧠 Benchmark philosophy
-This project is intentionally narrow and pragmatic. The goal is to compare **practical large-model transcription setups** on a realistic Dutch dataset, focusing on:
-- reproducibility (fixed dataset subset + fixed seed)
-- clear, comparable outputs (WER/CER + runtime metrics)
-- minimal “magic” (no hidden autotuning or random sampling)
+# Why this project exists
 
-## 🧰 Supported engines (v1)
-- **MLX Whisper** (Metal / Apple Silicon) — baseline (requires an MLX-converted model)
-- **faster-whisper** — PyTorch/MPS challenger
-- **whisper.cpp** — C++ inference (stubbed in v1)
+AI transcription has become widely used. Tools such as **Microsoft Teams** can automatically transcribe meetings, making conversations searchable and easier to review.
 
-## 🗂 Dataset source
-This benchmark is designed to use a deterministic subset of **Mozilla Common Voice** (Dutch), downloaded and cached locally.
+However, these systems typically rely on **cloud-based processing**, which means that recordings and transcripts are sent to external services. For many organisations and individuals this raises significant **privacy and data sovereignty concerns**.
 
-The dataset archive URL is configurable via `dataset.url`.
+Because of this, a growing number of **local transcription engines** are emerging that run entirely on personal hardware.
 
-- If the archive is reachable, it will be downloaded and extracted.
-- If the download fails (e.g., because the upstream URL changed or network access is restricted), the tool will fall back to a small **synthetic dataset** (tone audio + dummy transcripts) so the benchmark pipeline can still run.
+This concern is the reason I started building:
 
-You can also point `dataset.url` at a local archive (e.g., `file:///path/to/nl.tar.gz`) to avoid network downloads.
+**[AutoTranscribe2](https://github.com/okkie2/AutoTranscribe2)**
 
-## 🚀 Quick start (v1)
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+AutoTranscribe2 aims to become a **fully local alternative to meeting transcription tools such as Microsoft Teams**, where audio never leaves the user's machine. The project is still in an early stage and not yet integrated as a plugin or meeting assistant, but it provides the foundation for a practical local transcription pipeline.
 
-# Optional: install engine dependencies for a true benchmark
-pip install "faster-whisper" torch mlx-whisper
+To select the best transcription engines for such a system, I needed a reliable way to compare them.
+**TranscribeBench was created to solve that problem.**
 
-# Optional (MLX Whisper): prepare a converted model
-# See README/ARCHITECTURE for notes on MLX model preparation.
+Although it originated as a supporting tool for AutoTranscribe2, **TranscribeBench is designed to stand on its own as a general benchmarking framework for speech-to-text systems.**
 
-# Inspect / edit config.yaml
-python -m transcribebench.cli fetch-dataset
-python -m transcribebench.cli run-benchmark
-python -m transcribebench.cli report
+---
+
+# What TranscribeBench does
+
+TranscribeBench runs a repeatable benchmark pipeline:
+
+```
+Audio dataset
+      │
+      ▼
+Transcription engines
+      │
+      ▼
+Generated transcripts
+      │
+      ▼
+Evaluation against reference transcripts
+      │
+      ▼
+Benchmark report (WER / CER / timing)
 ```
 
-## 🧩 Submodule setup
-This project uses `whisper.cpp` as a git submodule (under `third_party/whisper.cpp`) to keep the outer repo clean.
+This allows transcription engines to be compared under **identical conditions**.
 
-If you clone the repo fresh, initialize and update the submodule before running the benchmark:
+---
 
-```bash
-git submodule update --init --recursive
+# Example output
+
+Example comparison of two engines on the same dataset:
+
+```
+Dataset: benchmark-dataset-nl-v1
+
+Engine              WER     CER     Speed
+-------------------------------------------
+mlx-whisper         7.8%    2.3%    1.4x realtime
+whisper-cpp         9.5%    3.1%    0.9x realtime
 ```
 
-## 📌 Notes
-- This repo is intentionally **not** trying to be an exhaustive benchmark suite.
-- The focus is on **practical reproducibility**, so we keep the first release narrow and clear.
+The benchmark ensures that:
+
+* each engine processes the **same audio**
+* results are compared against the **same reference transcripts**
+* metrics are calculated in a **consistent and reproducible way**
+
+---
+
+# Core concepts
+
+TranscribeBench is built around three simple concepts.
+
+## Dataset
+
+A dataset contains:
+
+* audio recordings
+* reference transcripts
+
+Example structure:
+
+```
+dataset/
+  audio/
+    sample1.wav
+    sample2.wav
+
+  transcripts/
+    sample1.txt
+    sample2.txt
+```
+
+The transcripts represent the **ground truth** used to measure transcription accuracy.
+
+---
+
+## Engine
+
+An **engine** is a transcription system consisting of:
+
+* a runtime
+* a model
+
+Examples include:
+
+* MLX Whisper
+* Faster-Whisper
+* whisper.cpp
+* OpenAI Whisper
+
+Each engine converts audio into text, allowing results to be compared.
+
+---
+
+## Benchmark
+
+A benchmark run:
+
+1. loads a dataset
+2. runs one or more transcription engines
+3. generates transcripts
+4. compares them with reference transcripts
+5. calculates accuracy metrics
+
+---
+
+# Metrics
+
+TranscribeBench currently focuses on standard speech recognition metrics.
+
+### Word Error Rate (WER)
+
+Measures the percentage of words that differ between the generated transcription and the reference transcript.
+
+Lower values indicate better transcription accuracy.
+
+### Character Error Rate (CER)
+
+Measures character-level differences.
+
+This is particularly useful for languages where word segmentation may be ambiguous.
+
+---
+
+# Dataset source
+
+Example datasets used in this project are derived from **Mozilla Common Voice**.
+
+Mozilla Common Voice is an open speech dataset designed to help build open and accessible speech recognition systems. It contains thousands of hours of recorded speech from volunteers worldwide.
+
+Project page:
+[https://commonvoice.mozilla.org](https://commonvoice.mozilla.org)
+
+Repository:
+[https://github.com/common-voice](https://github.com/common-voice)
+
+Common Voice provides:
+
+* high-quality **ground-truth transcripts**
+* recordings in **many languages**
+* an **open licence suitable for benchmarking**
+
+TranscribeBench typically uses **small curated subsets** of the dataset to keep benchmark runs lightweight and reproducible.
+
+---
+
+# Dataset reproducibility
+
+Benchmarks are only meaningful if they use the **same audio samples and transcripts**.
+
+TranscribeBench therefore defines a **fixed dataset subset** for each benchmark run. Each dataset specification includes:
+
+* dataset source
+* dataset version
+* language
+* exact list of audio files used
+
+Example dataset definition:
+
+```
+dataset:
+  source: Mozilla Common Voice
+  version: 17.0
+  language: nl
+  samples:
+    - common_voice_nl_18765432.wav
+    - common_voice_nl_18765433.wav
+    - common_voice_nl_18765434.wav
+```
+
+This ensures that benchmark results are **fully reproducible** across machines and engines.
+
+Benchmark results should always reference the dataset identifier used, for example:
+
+```
+Dataset: benchmark-dataset-nl-v1
+```
+
+---
+
+# Project relationship
+
+TranscribeBench and AutoTranscribe2 serve different roles:
+
+| Project         | Purpose                                            |
+| --------------- | -------------------------------------------------- |
+| AutoTranscribe2 | Local transcription pipeline                       |
+| TranscribeBench | Evaluation and comparison of transcription engines |
+
+TranscribeBench helps determine **which engine AutoTranscribe2 should use**.
+
+---
+
+# Project status
+
+This project is currently **experimental**.
+
+Planned improvements include:
+
+* support for additional transcription engines
+* automated dataset downloading
+* improved benchmarking metrics
+* reproducible benchmark reports
+* support for multiple languages
+
+---
+
+# Contributing
+
+Contributions are welcome.
+
+Areas where help would be particularly valuable:
+
+* new engine integrations
+* dataset adapters
+* improved evaluation metrics
+* benchmark visualisation and reporting
+
+---
+
+# License
+
+See the repository licence for details.
+
+---
+
+If you want, I can also show you **one structural addition used in many successful ML repos that makes the project immediately understandable to visitors within 10 seconds.**
