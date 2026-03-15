@@ -23,6 +23,6 @@ engines:
     enabled: true
 
 output:
-  results_dir: runs_10_largev1
-  reports_dir: reports_10_largev1
-  dataset_cache: dataset_cache
+  results_dir: artifacts/results/archive/runs_10_largev1
+  reports_dir: artifacts/reports/archive/reports_10_largev1
+  dataset_cache: .cache/datasets

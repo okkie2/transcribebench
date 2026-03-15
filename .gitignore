@@ -16,8 +16,5 @@ venv/
 output/
 results/
 
-# Benchmark artifacts
-runs/
-reports/
-
-dataset_cache/
+# Rebuildable cache
+.cache/

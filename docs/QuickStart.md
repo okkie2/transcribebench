@@ -1,6 +1,6 @@
 # Quick Start
 
-## 1) Setup
+## 1) Prepare environment
 
 Clone the repo and initialize the whisper.cpp submodule:
 
@@ -18,10 +18,10 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-Install optional dependencies for faster-whisper + MLX:
+Install optional dependencies for engine runtimes:
 
 ```bash
-pip install "faster-whisper" torch mlx-whisper
+pip install "faster-whisper" torch mlx-whisper parakeet-mlx
 ```
 
 ## 2) Start the interactive CLI UI
@@ -37,10 +37,10 @@ python -m transcribebench.cli
 ```
 
 Menu actions:
-- Run benchmark (auto-handles setup + dataset refresh when needed)
+- Run benchmark (auto-handles environment preparation checks + dataset cache refresh when needed)
 - Set sample size
-- Select engines
-- Show current status/configuration
+- Select engine/model pairs
+- Show status
 
 ## 3) Run benchmark
 
@@ -48,12 +48,18 @@ Choose `Run benchmark` from the menu.
 
 ## 4) View output
 
-Generated files:
-- `runs/results.json`
-- `reports/report.md`
-- `reports/results.csv`
+Benchmark run outputs:
+- `artifacts/results/latest/results.json`
+- `artifacts/reports/latest/report.md`
+- `artifacts/reports/latest/results.csv`
 
-Optional legacy commands:
+`report.md` contains per engine/model metrics (engine, model, WER, CER, time_seconds).
+
+Preferred CLI subcommands (if needed):
+- `transcribebench prepare-environment`
+- `transcribebench refresh-dataset`
+
+Legacy aliases still supported:
 - `make setup`
 - `make fetch`
 - `make bench`

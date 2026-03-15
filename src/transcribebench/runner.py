@@ -6,6 +6,8 @@ import dataclasses
 import json
 import pathlib
 import time
+import os
+from datetime import datetime, timezone
 from collections import defaultdict
 from typing import List
 
@@ -75,6 +77,7 @@ class BenchmarkRunner:
 
     def run(self) -> dict:
         """Run benchmark end-to-end and return a structured results dict."""
+        run_started_at_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         samples = self.dataset_provider.fetch(
             language=self.config.language,
             size=self.config.dataset.sample_size,
@@ -84,6 +87,7 @@ class BenchmarkRunner:
 
         results: list[dict] = []
         failures = 0
+        debug_engine = os.environ.get("TRANSCRIBEBENCH_DEBUG_ENGINE")
 
         for sample in samples:
             for target in self.targets:
@@ -109,6 +113,19 @@ class BenchmarkRunner:
 
                 wer = _simple_wer(sample.transcript, result.transcript)
                 cer = _simple_cer(sample.transcript, result.transcript)
+                if isinstance(result.info, dict) and result.info.get("error"):
+                    failures += 1
+
+                if debug_engine and result.engine == debug_engine:
+                    raw_output = result.transcript
+                    normalized_output = result.transcript.strip()
+                    print(f"[debug:{debug_engine}] audio={sample.audio_path}")
+                    print(f"[debug:{debug_engine}] reference={sample.transcript!r}")
+                    print(f"[debug:{debug_engine}] raw_output={raw_output!r}")
+                    print(f"[debug:{debug_engine}] normalized_output={normalized_output!r}")
+                    if isinstance(result.info, dict) and result.info.get("error"):
+                        print(f"[debug:{debug_engine}] error={result.info.get('error')}")
+                    print(f"[debug:{debug_engine}] wer={wer:.3f} cer={cer:.3f} elapsed={result.elapsed_seconds:.3f}")
 
                 results.append(
                     {
@@ -152,6 +169,9 @@ class BenchmarkRunner:
         }
 
         output = {
+            "run": {
+                "started_at_utc": run_started_at_utc,
+            },
             "config": {
                 "language": self.config.language,
                 "dataset": dataclasses.asdict(self.config.dataset),

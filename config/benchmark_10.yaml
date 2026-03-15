@@ -1,10 +1,10 @@
-# Test config for whisper.cpp CLI fallback (uses tiny model for speed)
+# Benchmark config with 10 samples (for comparing engines)
 
 language: nl
 
 dataset:
   provider: common_voice
-  sample_size: 2
+  sample_size: 10
   seed: 42
   url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
 
@@ -23,6 +23,6 @@ engines:
     enabled: true
 
 output:
-  results_dir: runs_test
-  reports_dir: reports_test
-  dataset_cache: dataset_cache
+  results_dir: artifacts/results/archive/runs_10
+  reports_dir: artifacts/reports/archive/reports_10
+  dataset_cache: .cache/datasets

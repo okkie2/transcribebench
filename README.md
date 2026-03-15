@@ -1,16 +1,3 @@
-Below is a **complete updated README** incorporating:
-2
-2
-
-* clearer onboarding
-* the privacy motivation
-* the relationship with **AutoTranscribe2**
-* Mozilla Common Voice credit
-* dataset reproducibility guidance
-* improved structure
-
----
-
 # TranscribeBench
 
 **TranscribeBench** is a benchmarking tool for speech-to-text engines.
@@ -21,39 +8,102 @@ It runs multiple transcription engines on the same audio dataset and compares th
 
 The goal is simple: **determine which engine and model performs best for your language, dataset, and hardware.**
 
+The terminology used in this project is defined in **docs/ubiquitous-language.md** to keep naming consistent across code, documentation, and the CLI.
+
+Repository structure (high-level):
+- `src/` application code
+- `config/` benchmark configurations
+- `artifacts/` generated benchmark run results and benchmark reports
+- `.cache/` rebuildable cache data (datasets, model/download cache)
+
 ---
 
-# Quick Start
+## Quick Start
 
-From the project root:
+Clone the repository and enter the project directory:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+git clone https://github.com/okkie2/transcribebench
+cd transcribebench
+```
+
+Start the interactive menu:
+
+```bash
 make menu
 ```
 
-This opens the interactive CLI UI with these actions:
+You will see the TranscribeBench menu:
+
+```
+TranscribeBench Menu
+1. Run benchmark
+2. Set sample size
+3. Select engines
+4. Show status
+5. Exit
+```
+
+### Running your first benchmark
+
+1. Choose **Select engines** to enable the transcription engines you want to test.
+2. Choose **Run benchmark**.
+
+TranscribeBench automatically:
+
+* verifies the local environment preparation
+* refreshes the dataset cache (rebuildable cache) if needed
+* runs the selected engines
+* generates a benchmark report
+
+If you want to run preparation checks explicitly:
+
+```bash
+transcribebench prepare-environment
+```
+
+### Benchmark run outputs
+
+After the benchmark finishes:
+
+```
+artifacts/results/latest/results.json
+artifacts/reports/latest/report.md
+artifacts/reports/latest/results.csv
+```
+
+contain benchmark run results and benchmark reports.
+
+## Using the CLI
+
+Launch the interactive CLI with:
+
+```bash
+transcribebench
+```
+
+or
+
+```bash
+python -m transcribebench.cli
+```
+
+Menu actions:
 - Run benchmark
 - Set sample size
 - Select engines
-- Show current status / configuration
+- Show status
 - Exit
 
-When you choose **Run benchmark**, TranscribeBench automatically:
-- checks setup (submodule/build state)
-- refreshes dataset cache if missing/stale
-- runs the benchmark
+The CLI automatically performs environment preparation checks and dataset cache refresh when needed.
+You do not need to run separate manual preparation steps in normal usage.
 
-You can still use the old non-interactive commands (`make setup`, `make fetch`, `make bench`) if you prefer.
-You can also launch the menu directly with `transcribebench` or `python -m transcribebench.cli`.
+Outputs are written to:
+- `artifacts/results/latest/results.json`
+- `artifacts/reports/latest/report.md`
+- `artifacts/reports/latest/results.csv`
 
-After completion:
-- raw results: `runs/results.json`
-- report files: `reports/report.md` and `reports/results.csv`
-
-Engine/model configuration now uses pairs:
+Engine/model configuration uses pairs (default config: `config/default.yaml`):
 
 ```yaml
 engines:
@@ -71,28 +121,29 @@ Parakeet support in this project is Apple Silicon local-only via `parakeet_mlx` 
 
 ---
 
-# Why this project exists
+## Why this project exists
 
 AI transcription has become widely used. Tools such as **Microsoft Teams** can automatically transcribe meetings, making conversations searchable and easier to review.
 
-However, these systems typically rely on **cloud-based processing**, which means that recordings and transcripts are sent to external services. For many organisations and individuals this raises significant **privacy and data sovereignty concerns**.
+However, these systems typically rely on **cloud-based processing**, which means recordings and transcripts are sent to external services. For many organisations and individuals this raises significant **privacy and data sovereignty concerns**.
 
 Because of this, a growing number of **local transcription engines** are emerging that run entirely on personal hardware.
 
-This concern is the reason I started building:
+This concern led to the creation of:
 
 **[AutoTranscribe2](https://github.com/okkie2/AutoTranscribe2)**
 
-AutoTranscribe2 aims to become a **fully local alternative to meeting transcription tools such as Microsoft Teams**, where audio never leaves the user's machine. The project is still in an early stage and not yet integrated as a plugin or meeting assistant, but it provides the foundation for a practical local transcription pipeline.
+AutoTranscribe2 aims to become a **fully local alternative to meeting transcription tools such as Microsoft Teams**, where audio never leaves the user’s machine. The project is still in an early stage but provides the foundation for a practical local transcription pipeline.
 
-To select the best transcription engines for such a system, I needed a reliable way to compare them.
+To select the best transcription engines for such a system, a reliable way to compare them was needed.
+
 **TranscribeBench was created to solve that problem.**
 
 Although it originated as a supporting tool for AutoTranscribe2, **TranscribeBench is designed to stand on its own as a general benchmarking framework for speech-to-text systems.**
 
 ---
 
-# What TranscribeBench does
+## What TranscribeBench does
 
 TranscribeBench runs a repeatable benchmark pipeline:
 
@@ -116,17 +167,17 @@ This allows transcription engines to be compared under **identical conditions**.
 
 ---
 
-# Example output
+## Example output
 
 Example comparison of two engines on the same dataset:
 
 ```
 Dataset: benchmark-dataset-nl-v1
 
-Engine              WER     CER     Speed
--------------------------------------------
-mlx-whisper         7.8%    2.3%    1.4x realtime
-whisper-cpp         9.5%    3.1%    0.9x realtime
+engine            model                      WER    CER    speed
+----------------------------------------------------------------
+mlx_whisper       whisper-large-v3           7.8%   2.3%   1.4x realtime
+whisper_cpp       large-v1                   9.5%   3.1%   0.9x realtime
 ```
 
 The benchmark ensures that:
@@ -137,11 +188,11 @@ The benchmark ensures that:
 
 ---
 
-# Core concepts
+## Core concepts
 
 TranscribeBench is built around three simple concepts.
 
-## Dataset
+### Dataset
 
 A dataset contains:
 
@@ -165,7 +216,7 @@ The transcripts represent the **ground truth** used to measure transcription acc
 
 ---
 
-## Engine
+### Engine
 
 An **engine** is a transcription system consisting of:
 
@@ -183,19 +234,19 @@ Each engine converts audio into text, allowing results to be compared.
 
 ---
 
-## Benchmark
+### Benchmark
 
 A benchmark run:
 
 1. loads a dataset
-2. runs one or more transcription engines
+2. runs one or more engine/model pairs
 3. generates transcripts
 4. compares them with reference transcripts
 5. calculates accuracy metrics
 
 ---
 
-# Metrics
+## Metrics
 
 TranscribeBench currently focuses on standard speech recognition metrics.
 
@@ -213,7 +264,7 @@ This is particularly useful for languages where word segmentation may be ambiguo
 
 ---
 
-# Dataset source
+## Dataset source
 
 Example datasets used in this project are derived from **Mozilla Common Voice**.
 
@@ -235,7 +286,7 @@ TranscribeBench typically uses **small curated subsets** of the dataset to keep 
 
 ---
 
-# Dataset reproducibility
+## Dataset reproducibility
 
 Benchmarks are only meaningful if they use the **same audio samples and transcripts**.
 
@@ -269,7 +320,7 @@ Dataset: benchmark-dataset-nl-v1
 
 ---
 
-# Project relationship
+## Project relationship
 
 TranscribeBench and AutoTranscribe2 serve different roles:
 
@@ -282,7 +333,7 @@ TranscribeBench helps determine **which engine AutoTranscribe2 should use**.
 
 ---
 
-# Project status
+## Project status
 
 This project is currently **experimental**.
 
@@ -296,7 +347,7 @@ Planned improvements include:
 
 ---
 
-# Contributing
+## Contributing
 
 Contributions are welcome.
 
@@ -309,6 +360,6 @@ Areas where help would be particularly valuable:
 
 ---
 
-# License
+## License
 
 See the repository licence for details.

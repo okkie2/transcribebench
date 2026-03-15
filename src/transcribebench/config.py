@@ -27,9 +27,9 @@ class DatasetConfig:
 
 @dataclasses.dataclass(frozen=True)
 class OutputConfig:
-    results_dir: str = "runs"
-    reports_dir: str = "reports"
-    dataset_cache: str = "dataset_cache"
+    results_dir: str = "artifacts/results/latest"
+    reports_dir: str = "artifacts/reports/latest"
+    dataset_cache: str = ".cache/datasets"
 
 
 def _default_engines() -> list[EngineSpec]:
@@ -50,7 +50,7 @@ class Config:
     engines: list[EngineSpec] = dataclasses.field(default_factory=_default_engines)
 
     @classmethod
-    def load(cls, path: str | pathlib.Path = "config.yaml") -> "Config":
+    def load(cls, path: str | pathlib.Path = "config/default.yaml") -> "Config":
         path = pathlib.Path(path)
         with path.open("r", encoding="utf-8") as f:
             raw = yaml.safe_load(f) or {}

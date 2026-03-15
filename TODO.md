@@ -18,6 +18,9 @@
 - Add `distil-large-v3`, `nvidia/parakeet-ctc-1.1b`, `facebook/mms-1b-all` adapters
 - Add benchmark configuration profiles (small/medium/large runs)
 
+## CLI / UX Improvements
+- Improve CLI transparency when downloading speech models by printing a clear pre-download message with engine, model name, and approximate size when known (for example: `Downloading model: parakeet-ctc-1.1b (~4.2 GB)`) before the HuggingFace/tqdm progress bar starts
+
 ## Longer-term / stretch desires
 - Add structured experiment definitions (train/validation splits)
 - Add support for cloud/offload setups (if Apple Silicon isn’t enough)

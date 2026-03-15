@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import subprocess
 import sys
@@ -383,6 +384,18 @@ def _interactive_select_engines(config_path: str) -> None:
         _set_engines(config_path, updated)
 
 
+def _open_most_recent_report(config_path: str) -> None:
+    config = Config.load(config_path)
+    report_path = Path(config.output.reports_dir) / "report.md"
+    if not report_path.exists():
+        print("No benchmark report found yet. Run a benchmark first.")
+        return
+
+    print(f"Most recent report: {report_path}")
+    print("\n--- report.md ---\n")
+    print(report_path.read_text(encoding="utf-8"))
+
+
 def _cmd_menu(args: argparse.Namespace) -> int:
     config_path = args.config
     while True:
@@ -391,8 +404,9 @@ def _cmd_menu(args: argparse.Namespace) -> int:
         print("2. Set sample size")
         print("3. Select engines")
         print("4. Show status")
-        print("5. Exit")
-        choice = input("Choose an action [1-5]: ").strip()
+        print("5. Open most recent report")
+        print("6. Exit")
+        choice = input("Choose an action [1-6]: ").strip()
 
         if choice == "1":
             try:
@@ -406,10 +420,12 @@ def _cmd_menu(args: argparse.Namespace) -> int:
         elif choice == "4":
             _show_status(config_path)
         elif choice == "5":
+            _open_most_recent_report(config_path)
+        elif choice == "6":
             print("Goodbye.")
             return 0
         else:
-            print("Please choose 1, 2, 3, 4, or 5.")
+            print("Please choose 1, 2, 3, 4, 5, or 6.")
 
 
 def _cmd_setup(args: argparse.Namespace) -> int:
@@ -462,6 +478,17 @@ def _cmd_run_benchmark(args: argparse.Namespace) -> int:
 
     runner = BenchmarkRunner(config, targets)
     results = runner.run()
+    results.setdefault("run", {})
+    results["run"]["config_path"] = str(Path(args.config))
+    results["run"]["engines_evaluated"] = [
+        {"engine": t.adapter.engine_name, "model": t.model} for t in targets
+    ]
+    results["run"]["sample_size"] = config.dataset.sample_size
+    results["run"]["language"] = config.language
+    results["run"]["dataset"] = {
+        "provider": config.dataset.provider,
+        "url": config.dataset.url,
+    }
     runner.save_results(results)
     print(f"Benchmark complete. Results written to: {config.output.results_dir}")
     return 0

@@ -215,7 +215,7 @@ class WhisperCppEngine(EngineAdapter):
                 f"Unknown whisper.cpp model '{model}'. Provide a local .bin path or one of: {', '.join(sorted(known))}"
             )
 
-        model_file = self._repo_root() / "dataset_cache" / "whisper_cpp_models" / known[model]
+        model_file = self._repo_root() / ".cache" / "datasets" / "whisper_cpp_models" / known[model]
         model_file.parent.mkdir(parents=True, exist_ok=True)
 
         if model_file.exists():

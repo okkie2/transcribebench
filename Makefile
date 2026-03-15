@@ -1,16 +1,17 @@
 # Makefile for TranscribeBench
 # Usage:
 #   make setup      - initialize submodule + build whisper.cpp
-#   make fetch      - fetch dataset (uses config.yaml)
-#   make run        - run benchmark (uses config.yaml)
+#   make fetch      - refresh dataset cache (uses config/default.yaml)
+#   make run        - run benchmark (uses config/default.yaml)
 #   make bench      - shortcut alias for run
 #   make menu       - open interactive CLI menu
-#   make report     - generate report (uses config.yaml)
-#   make clean      - remove generated runs/reports
+#   make report     - generate report (uses config/default.yaml)
+#   make clean      - remove generated artifacts/cache
 
 .PHONY: setup submodule build-whispercpp fetch run bench menu report clean
 
 PYTHON := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || echo python)
+CONFIG := config/default.yaml
 
 setup: submodule build-whispercpp
 
@@ -21,18 +22,18 @@ build-whispercpp:
 	cd third_party/whisper.cpp && make
 
 fetch:
-	$(PYTHON) -m transcribebench.cli fetch-dataset
+	$(PYTHON) -m transcribebench.cli --config $(CONFIG) refresh-dataset
 
 run:
-	$(PYTHON) -m transcribebench.cli run-benchmark
+	$(PYTHON) -m transcribebench.cli --config $(CONFIG) run-benchmark
 
 bench: run
 
 menu:
-	$(PYTHON) -m transcribebench.cli
+	$(PYTHON) -m transcribebench.cli --config $(CONFIG)
 
 report:
-	$(PYTHON) -m transcribebench.cli report
+	$(PYTHON) -m transcribebench.cli --config $(CONFIG) report
 
 clean:
-	rm -rf runs reports runs_* reports_*
+	rm -rf artifacts/results/latest/* artifacts/reports/latest/*
