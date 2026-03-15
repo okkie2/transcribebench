@@ -1,7 +1,6 @@
 # TranscribeBench
 
 TranscribeBench is a benchmarking tool for **speech-to-text engines**.
-
 It runs multiple transcription engines on the same audio dataset and compares their output against ground-truth transcripts using objective metrics such as:
 
 * Word Error Rate (WER)
@@ -18,11 +17,8 @@ Project repository:
 ## Why this project exists
 
 Many transcription tools (for example Microsoft Teams) rely on **cloud processing**, meaning audio recordings are sent to external services.
-
 For organisations and individuals concerned with **privacy and data sovereignty**, this can be undesirable.
-
 At the same time, a growing ecosystem of **local speech-to-text engines** has emerged that can run entirely on personal hardware.
-
 TranscribeBench exists to answer a practical question:
 
 > Which local transcription engine performs best?
@@ -39,7 +35,6 @@ AutoTranscribe2 aims to provide a **fully local transcription pipeline** where a
 ## Hardware requirements
 
 TranscribeBench runs transcription models locally. Hardware requirements therefore depend on the models you benchmark.
-
 The current setup is primarily tested on:
 
 * **Apple Silicon Macs (M1 / M2 / M3 / M4)**
