@@ -7,6 +7,7 @@ import json
 import pathlib
 import time
 import os
+import platform
 import subprocess
 from datetime import datetime, timezone
 from collections import defaultdict
@@ -194,6 +195,7 @@ class BenchmarkRunner:
 
         for (engine_name, model_name), rows in by_engine_model.items():
             count = len(rows)
+            failed_count = sum(1 for r in rows if isinstance(r.get("info"), dict) and r["info"].get("error"))
             avg_wer = sum(float(r["wer"]) for r in rows) / max(1, count)
             avg_cer = sum(float(r["cer"]) for r in rows) / max(1, count)
             avg_elapsed = sum(float(r["elapsed_seconds"]) for r in rows) / max(1, count)
@@ -205,6 +207,7 @@ class BenchmarkRunner:
                 "engine": engine_name,
                 "model": model_name,
                 "count": count,
+                "failed_count": failed_count,
                 "avg_wer": avg_wer,
                 "avg_cer": avg_cer,
                 "avg_transcription_time_seconds": avg_elapsed,
@@ -224,6 +227,8 @@ class BenchmarkRunner:
                 "dataset_name": dataset_name,
                 "sample_size": self.config.dataset.sample_size,
                 "total_audio_seconds": total_audio_seconds,
+                "os": f"{platform.system()} {platform.release()}",
+                "hardware": platform.machine(),
             },
             "config": {
                 "language": self.config.language,
