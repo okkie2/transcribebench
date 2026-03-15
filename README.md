@@ -13,6 +13,8 @@ Below is a **complete updated README** incorporating:
 
 **TranscribeBench** is a benchmarking tool for speech-to-text engines.
 
+> This repo includes helper pages in `docs/` that can be used as GitHub Wiki content.
+
 It runs multiple transcription engines on the same audio dataset and compares their output against ground-truth transcripts using objective metrics such as **Word Error Rate (WER)** and **Character Error Rate (CER)**.
 
 The goal is simple: **determine which engine and model performs best for your language, dataset, and hardware.**
