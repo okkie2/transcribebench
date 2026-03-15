@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,69 @@ def _adapter_mapping():
         "whisper_cpp": WhisperCppEngine(),
         "nemo_ctc": ParakeetCtcEngine(),
     }
+
+
+def _check_requirements_safe(engine: str) -> list[str]:
+    """Run requirement checks in a subprocess so native import crashes are isolated."""
+    script = (
+        "import json,sys\n"
+        "from transcribebench.cli import _adapter_mapping\n"
+        "engine=sys.argv[1]\n"
+        "adapter=_adapter_mapping().get(engine)\n"
+        "if adapter is None:\n"
+        "    print(json.dumps({'missing':[f'Unknown engine: {engine}']}))\n"
+        "    raise SystemExit(0)\n"
+        "try:\n"
+        "    missing=adapter.check_requirements()\n"
+        "    print(json.dumps({'missing': missing}))\n"
+        "except Exception as e:\n"
+        "    print(json.dumps({'missing':[str(e)]}))\n"
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", script, engine],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return [f"requirement check crashed (exit code {proc.returncode})"]
+    try:
+        payload = json.loads(proc.stdout.strip() or "{}")
+    except json.JSONDecodeError:
+        return ["requirement check returned unreadable output"]
+    missing = payload.get("missing", [])
+    return [str(x) for x in missing] if isinstance(missing, list) else ["unknown requirement check failure"]
+
+
+def _detect_engine_availability() -> tuple[dict[str, Any], dict[str, list[str]]]:
+    adapters = _adapter_mapping()
+    available: dict[str, Any] = {}
+    unavailable: dict[str, list[str]] = {}
+    for engine, adapter in adapters.items():
+        missing = _check_requirements_safe(engine)
+        if missing:
+            unavailable[engine] = missing
+        else:
+            available[engine] = adapter
+    return available, unavailable
+
+
+def _disable_unavailable_engines(config_path: str, unavailable: dict[str, list[str]]) -> bool:
+    config = Config.load(config_path)
+    changed = False
+    updated: list[dict[str, Any]] = []
+    for spec in config.engines:
+        enabled = spec.enabled
+        if spec.engine in unavailable and enabled:
+            enabled = False
+            changed = True
+        updated.append({"engine": spec.engine, "model": spec.model, "enabled": enabled})
+    if changed:
+        try:
+            _set_engines(config_path, updated)
+        except OSError:
+            # Keep CLI usable if config path is read-only in this environment.
+            return False
+    return changed
 
 
 def _build_targets(config: Config) -> list[BenchmarkRunner.RunTarget]:
@@ -105,7 +169,7 @@ def _check_dataset_state(config: Config) -> tuple[str, str]:
     return "ready", "cache matches current config"
 
 
-def _estimate_runtime(config: Config) -> str:
+def _estimate_runtime(config: Config, allowed_engines: set[str] | None = None) -> str:
     results_path = Path(config.output.results_dir) / "results.json"
     if not results_path.exists():
         return "Estimate unavailable yet (no previous local benchmark runs found)."
@@ -117,7 +181,10 @@ def _estimate_runtime(config: Config) -> str:
     except Exception:
         return "Estimate unavailable yet (could not read previous results)."
 
-    enabled = [(e.engine, e.model) for e in config.enabled_engines()]
+    enabled_specs = config.enabled_engines()
+    if allowed_engines is not None:
+        enabled_specs = [e for e in enabled_specs if e.engine in allowed_engines]
+    enabled = [(e.engine, e.model) for e in enabled_specs]
     if not enabled:
         return "Estimate unavailable (no engines enabled)."
 
@@ -190,10 +257,12 @@ def _run_benchmark_with_auto_prepare(config_path: str) -> int:
 
 
 def _show_status(config_path: str) -> None:
+    available, unavailable = _detect_engine_availability()
+    _disable_unavailable_engines(config_path, unavailable)
     config = Config.load(config_path)
     setup_ready, _ = _check_setup_state()
     dataset_state, dataset_note = _check_dataset_state(config)
-    enabled = [f"{e.engine} ({e.model})" for e in config.enabled_engines()]
+    enabled = [f"{e.engine} ({e.model})" for e in config.enabled_engines() if e.engine in available]
 
     print("\nCurrent status")
     print(f"- Setup: {'ready' if setup_ready else 'missing'}")
@@ -201,11 +270,20 @@ def _show_status(config_path: str) -> None:
     print(f"- Sample size: {config.dataset.sample_size}")
     print(f"- Language: {config.language}")
     print(f"- Enabled engine/model pairs: {', '.join(enabled) if enabled else 'none'}")
+    print("- Available engines:")
+    for name in sorted(available.keys()):
+        print(f"  {name}")
+    print("- Unavailable engines:")
+    if unavailable:
+        for name, missing in sorted(unavailable.items()):
+            print(f"  {name} - missing {', '.join(missing)}")
+    else:
+        print("  none")
     print("- Output files:")
     print(f"  - {Path(config.output.results_dir) / 'results.json'}")
     print(f"  - {Path(config.output.reports_dir) / 'report.md'}")
     print(f"  - {Path(config.output.reports_dir) / 'results.csv'}")
-    print(_estimate_runtime(config))
+    print(_estimate_runtime(config, allowed_engines=set(available.keys())))
 
 
 def _interactive_set_sample_size(config_path: str) -> None:
@@ -237,31 +315,49 @@ def _interactive_select_engines(config_path: str) -> None:
     }
 
     while True:
+        available, unavailable = _detect_engine_availability()
+        _disable_unavailable_engines(config_path, unavailable)
         config = Config.load(config_path)
-        engines = list(config.engines)
-        print("\nSelect engine/model pairs (toggle by number, Enter to finish):")
-        for idx, spec in enumerate(engines, start=1):
-            mark = "x" if spec.enabled else " "
-            print(f"{idx}. [{mark}] {spec.engine} ({spec.model}) - {hints.get(spec.engine, '')}".strip())
+        engine_to_specs: dict[str, list[EngineSpec]] = {}
+        for spec in config.engines:
+            engine_to_specs.setdefault(spec.engine, []).append(spec)
+
+        selectable = [engine for engine in engine_to_specs.keys() if engine in available]
+        print("\nSelectable engines:")
+        for idx, engine in enumerate(selectable, start=1):
+            selected = any(s.enabled for s in engine_to_specs[engine])
+            mark = "x" if selected else " "
+            print(f"{idx}. [{mark}] {engine} - {hints.get(engine, '')}".strip())
+
+        print("\nUnavailable engines on this system:")
+        if unavailable:
+            for name, missing in sorted(unavailable.items()):
+                print(f"- {name} - missing requirements: {', '.join(missing)}")
+        else:
+            print("- none")
 
         choice = input("Choice: ").strip()
         if not choice:
-            enabled = [f"{e.engine} ({e.model})" for e in engines if e.enabled]
+            enabled = [f"{e.engine} ({e.model})" for e in config.engines if e.enabled and e.engine in available]
             print(f"Saved. Enabled: {', '.join(enabled) if enabled else 'none'}")
-            print(_estimate_runtime(Config.load(config_path)))
+            print(_estimate_runtime(Config.load(config_path), allowed_engines=set(available.keys())))
             return
-        if not choice.isdigit() or not (1 <= int(choice) <= len(engines)):
+        if not selectable:
+            print("No runnable engines are currently available.")
+            continue
+        if not choice.isdigit() or not (1 <= int(choice) <= len(selectable)):
             print("Invalid selection.")
             continue
 
-        selected_idx = int(choice) - 1
+        selected_engine = selectable[int(choice) - 1]
+        current = any(s.enabled for s in engine_to_specs[selected_engine])
         updated: list[dict[str, Any]] = []
-        for i, spec in enumerate(engines):
+        for spec in config.engines:
             updated.append(
                 {
                     "engine": spec.engine,
                     "model": spec.model,
-                    "enabled": (not spec.enabled) if i == selected_idx else spec.enabled,
+                    "enabled": (not current) if spec.engine == selected_engine else spec.enabled,
                 }
             )
         _set_engines(config_path, updated)
@@ -319,6 +415,8 @@ def _cmd_menu(args: argparse.Namespace) -> int:
 
 
 def _cmd_setup(args: argparse.Namespace) -> int:
+    available, unavailable = _detect_engine_availability()
+    _disable_unavailable_engines(args.config, unavailable)
     config = Config.load(args.config)
     targets = _build_targets(config)
 
@@ -356,24 +454,15 @@ def _cmd_fetch_dataset(args: argparse.Namespace) -> int:
 
 
 def _cmd_run_benchmark(args: argparse.Namespace) -> int:
+    available, unavailable = _detect_engine_availability()
+    _disable_unavailable_engines(args.config, unavailable)
     config = Config.load(args.config)
-    targets = _build_targets(config)
-
-    usable_targets: list[BenchmarkRunner.RunTarget] = []
-    for target in targets:
-        missing = target.adapter.check_requirements()
-        if missing:
-            print(f"Skipping {target.adapter.engine_name} ({target.model}): missing requirements:")
-            for m in missing:
-                print(f"  - {m}")
-        else:
-            usable_targets.append(target)
-
-    if not usable_targets:
+    targets = [t for t in _build_targets(config) if t.adapter.engine_name in available]
+    if not targets:
         print("No usable engines available; please install dependencies or enable a supported engine.")
         return 1
 
-    runner = BenchmarkRunner(config, usable_targets)
+    runner = BenchmarkRunner(config, targets)
     results = runner.run()
     runner.save_results(results)
     print(f"Benchmark complete. Results written to: {config.output.results_dir}")
