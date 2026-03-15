@@ -263,6 +263,3 @@ Areas where help would be particularly valuable:
 
 See the repository licence for details.
 
----
-
-If you want, I can also show you **one structural addition used in many successful ML repos that makes the project immediately understandable to visitors within 10 seconds.**
