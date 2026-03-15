@@ -254,15 +254,15 @@ def _run_fetch(config_path: str) -> None:
 
 def _run_benchmark_with_auto_prepare(config_path: str) -> int:
     config = Config.load(config_path)
-    print("Checking setup...")
+    print("Checking environment preparation...")
     setup_ready, setup_notes = _check_setup_state()
     if not setup_ready:
         for note in setup_notes:
             print(f"- {note}")
         _run_setup()
-        print("Setup complete.")
+        print("Environment preparation complete.")
     else:
-        print("Setup is ready.")
+        print("Environment is ready.")
 
     print("Checking dataset cache...")
     dataset_state, dataset_note = _check_dataset_state(config)
@@ -284,7 +284,8 @@ def _show_status(config_path: str) -> None:
     enabled = [f"{e.engine} ({e.model})" for e in config.enabled_engines() if e.engine in available]
 
     print("\nCurrent status")
-    print(f"- Setup: {'ready' if setup_ready else 'missing'}")
+    print(f"- Configuration file: {config_path}")
+    print(f"- Environment: {'ready' if setup_ready else 'missing requirements'}")
     print(f"- Dataset: {dataset_state} ({dataset_note})")
     print(f"- Sample size: {config.dataset.sample_size}")
     print(f"- Language: {config.language}")
@@ -382,25 +383,6 @@ def _interactive_select_engines(config_path: str) -> None:
         _set_engines(config_path, updated)
 
 
-def _open_most_recent_report(config_path: str) -> None:
-    config = Config.load(config_path)
-    cwd = Path.cwd()
-
-    candidates = list(cwd.glob("reports*/report.md"))
-    default_report = Path(config.output.reports_dir) / "report.md"
-    if default_report.exists() and default_report not in candidates:
-        candidates.append(default_report)
-
-    if not candidates:
-        print("No report found yet. Run a benchmark first.")
-        return
-
-    latest = max(candidates, key=lambda p: p.stat().st_mtime)
-    print(f"Most recent report: {latest}")
-    print("\n--- report.md ---\n")
-    print(latest.read_text(encoding="utf-8"))
-
-
 def _cmd_menu(args: argparse.Namespace) -> int:
     config_path = args.config
     while True:
@@ -408,10 +390,9 @@ def _cmd_menu(args: argparse.Namespace) -> int:
         print("1. Run benchmark")
         print("2. Set sample size")
         print("3. Select engines")
-        print("4. Show current status / configuration")
-        print("5. Open most recent report")
-        print("6. Exit")
-        choice = input("Choose an action [1-6]: ").strip()
+        print("4. Show status")
+        print("5. Exit")
+        choice = input("Choose an action [1-5]: ").strip()
 
         if choice == "1":
             try:
@@ -425,12 +406,10 @@ def _cmd_menu(args: argparse.Namespace) -> int:
         elif choice == "4":
             _show_status(config_path)
         elif choice == "5":
-            _open_most_recent_report(config_path)
-        elif choice == "6":
             print("Goodbye.")
             return 0
         else:
-            print("Please choose 1, 2, 3, 4, 5, or 6.")
+            print("Please choose 1, 2, 3, 4, or 5.")
 
 
 def _cmd_setup(args: argparse.Namespace) -> int:
@@ -451,7 +430,7 @@ def _cmd_setup(args: argparse.Namespace) -> int:
             messages.extend([f"  - {m}" for m in missing])
 
     if messages:
-        print("Setup checks completed with messages:")
+        print("Environment preparation checks completed with messages:")
         print("\n".join(messages))
         return 1
 
@@ -468,7 +447,7 @@ def _cmd_fetch_dataset(args: argparse.Namespace) -> int:
         seed=config.dataset.seed,
         url=config.dataset.url,
     )
-    print("Dataset fetched (or already cached).")
+    print("Dataset cache refreshed (or already up to date).")
     return 0
 
 
@@ -502,12 +481,12 @@ def _cmd_report(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="transcribebench")
-    parser.add_argument("--config", default="config.yaml", help="Path to config file")
+    parser.add_argument("--config", default="config/default.yaml", help="Path to config file")
 
     subparsers = parser.add_subparsers(dest="command", required=False)
 
-    subparsers.add_parser("setup", help="Check prerequisites for enabled engines")
-    subparsers.add_parser("fetch-dataset", help="Download/cache dataset subset")
+    subparsers.add_parser("prepare-environment", help="Check environment requirements for enabled engines")
+    subparsers.add_parser("refresh-dataset", help="Refresh dataset cache for the current configuration")
     subparsers.add_parser("run-benchmark", help="Run the benchmark and store results")
     subparsers.add_parser("report", help="Generate human-readable report artifacts")
     subparsers.add_parser("menu", help="Open interactive CLI menu")
@@ -516,9 +495,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command is None or args.command == "menu":
         return _cmd_menu(args)
-    if args.command == "setup":
+    if args.command == "prepare-environment":
         return _cmd_setup(args)
-    if args.command == "fetch-dataset":
+    if args.command == "refresh-dataset":
         return _cmd_fetch_dataset(args)
     if args.command == "run-benchmark":
         return _cmd_run_benchmark(args)
