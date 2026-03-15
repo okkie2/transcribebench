@@ -38,6 +38,10 @@ class EnginesConfig:
     faster_whisper: EngineConfig = EngineConfig()
     faster_whisper_large: EngineConfig = EngineConfig()
     whisper_cpp: EngineConfig = EngineConfig()
+    parakeet_ctc_1_1b: EngineConfig = EngineConfig(
+        enabled=False,
+        model="nvidia/parakeet-ctc-1.1b",
+    )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -77,5 +81,6 @@ class Config:
                 faster_whisper=EngineConfig(**(engines_raw.get("faster_whisper", {}) or {})),
                 faster_whisper_large=EngineConfig(**(engines_raw.get("faster_whisper_large", {}) or {})),
                 whisper_cpp=EngineConfig(**(engines_raw.get("whisper_cpp", {}) or {})),
+                parakeet_ctc_1_1b=EngineConfig(**(engines_raw.get("parakeet_ctc_1_1b", {}) or {})),
             ),
         )

@@ -24,20 +24,37 @@ Install optional dependencies for faster-whisper + MLX:
 pip install "faster-whisper" torch mlx-whisper
 ```
 
-## 2) Fetch dataset
+## 2) Start the interactive CLI UI
 
 ```bash
-make fetch
+transcribebench
 ```
+
+If you do not have the console script on your PATH yet, you can use:
+
+```bash
+python -m transcribebench.cli
+```
+
+Menu actions:
+- Run benchmark (auto-handles setup + dataset refresh when needed)
+- Set sample size
+- Select engines
+- Show current status/configuration
 
 ## 3) Run benchmark
 
-```bash
-make run
-```
+Choose `Run benchmark` from the menu.
 
-## 4) Generate report
+## 4) View output
 
-```bash
-make report
-```
+Generated files:
+- `runs/results.json`
+- `reports/report.md`
+- `reports/results.csv`
+
+Optional legacy commands:
+- `make setup`
+- `make fetch`
+- `make bench`
+- `make report`

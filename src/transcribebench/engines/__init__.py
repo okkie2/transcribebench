@@ -4,6 +4,7 @@ from .base import EngineAdapter, EngineResult
 from .mlx_whisper import MlxWhisperEngine
 from .faster_whisper import FasterWhisperEngine
 from .whisper_cpp import WhisperCppEngine
+from .parakeet_ctc import ParakeetCtcEngine
 
 __all__ = [
     "EngineAdapter",
@@ -11,4 +12,5 @@ __all__ = [
     "MlxWhisperEngine",
     "FasterWhisperEngine",
     "WhisperCppEngine",
+    "ParakeetCtcEngine",
 ]

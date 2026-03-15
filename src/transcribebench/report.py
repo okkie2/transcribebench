@@ -27,6 +27,20 @@ class Reporter:
         lines.append("\n---\n")
 
         lines.append("## Per-engine overview\n")
+        per_engine = metrics.get("per_engine", {})
+        if per_engine:
+            lines.append("| Engine | Avg WER | Avg CER | Avg time (s) | Avg RTF |")
+            lines.append("| --- | ---: | ---: | ---: | ---: |")
+            for engine_name, stats in per_engine.items():
+                avg_wer = float(stats.get("avg_wer", 0.0))
+                avg_cer = float(stats.get("avg_cer", 0.0))
+                avg_time = float(stats.get("avg_transcription_time_seconds", 0.0))
+                avg_rtf = stats.get("avg_rtf")
+                rtf_str = f"{float(avg_rtf):.3f}" if avg_rtf is not None else "n/a"
+                lines.append(
+                    f"| {engine_name} | {avg_wer:.3f} | {avg_cer:.3f} | {avg_time:.3f} | {rtf_str} |"
+                )
+            lines.append("")
         lines.append("(Detailed results are available in `results.csv` and `results.json`.)\n")
 
         path.write_text("\n".join(lines), encoding="utf-8")

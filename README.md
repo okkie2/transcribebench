@@ -1,4 +1,6 @@
 Below is a **complete updated README** incorporating:
+2
+2
 
 * clearer onboarding
 * the privacy motivation
@@ -18,6 +20,38 @@ Below is a **complete updated README** incorporating:
 It runs multiple transcription engines on the same audio dataset and compares their output against ground-truth transcripts using objective metrics such as **Word Error Rate (WER)** and **Character Error Rate (CER)**.
 
 The goal is simple: **determine which engine and model performs best for your language, dataset, and hardware.**
+
+---
+
+# Quick Start
+
+From the project root:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+make menu
+```
+
+This opens the interactive CLI UI with these actions:
+- Run benchmark
+- Set sample size
+- Select engines
+- Show current status / configuration
+- Exit
+
+When you choose **Run benchmark**, TranscribeBench automatically:
+- checks setup (submodule/build state)
+- refreshes dataset cache if missing/stale
+- runs the benchmark
+
+You can still use the old non-interactive commands (`make setup`, `make fetch`, `make bench`) if you prefer.
+You can also launch the menu directly with `transcribebench` or `python -m transcribebench.cli`.
+
+After completion:
+- raw results: `runs/results.json`
+- report files: `reports/report.md` and `reports/results.csv`
 
 ---
 
@@ -262,4 +296,3 @@ Areas where help would be particularly valuable:
 # License
 
 See the repository licence for details.
-

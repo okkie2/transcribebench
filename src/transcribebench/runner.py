@@ -6,6 +6,7 @@ import dataclasses
 import json
 import pathlib
 import time
+from collections import defaultdict
 from typing import List
 
 from .config import Config
@@ -106,16 +107,40 @@ class BenchmarkRunner:
                 results.append(
                     {
                         **dataclasses.asdict(result),
+                        "rtf": result.real_time_factor,
                         "reference": sample.transcript,
                         "wer": wer,
                         "cer": cer,
                     }
                 )
 
+        per_engine: dict[str, dict[str, float | int | None]] = {}
+        by_engine: dict[str, list[dict]] = defaultdict(list)
+        for row in results:
+            by_engine[row["engine"]].append(row)
+
+        for engine_name, rows in by_engine.items():
+            count = len(rows)
+            avg_wer = sum(float(r["wer"]) for r in rows) / max(1, count)
+            avg_cer = sum(float(r["cer"]) for r in rows) / max(1, count)
+            avg_elapsed = sum(float(r["elapsed_seconds"]) for r in rows) / max(1, count)
+
+            rtfs = [float(r["real_time_factor"]) for r in rows if r.get("real_time_factor") is not None]
+            avg_rtf = (sum(rtfs) / len(rtfs)) if rtfs else None
+
+            per_engine[engine_name] = {
+                "count": count,
+                "avg_wer": avg_wer,
+                "avg_cer": avg_cer,
+                "avg_transcription_time_seconds": avg_elapsed,
+                "avg_rtf": avg_rtf,
+            }
+
         metrics = {
             "total_samples": len(samples),
             "engines": [e.name for e in self.engines],
             "failures": failures,
+            "per_engine": per_engine,
         }
 
         output = {
@@ -128,6 +153,7 @@ class BenchmarkRunner:
                     "faster_whisper": dataclasses.asdict(self.config.engines.faster_whisper),
                     "faster_whisper_large": dataclasses.asdict(self.config.engines.faster_whisper_large),
                     "whisper_cpp": dataclasses.asdict(self.config.engines.whisper_cpp),
+                    "parakeet_ctc_1_1b": dataclasses.asdict(self.config.engines.parakeet_ctc_1_1b),
                 },
             },
             "metrics": metrics,

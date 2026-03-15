@@ -3,10 +3,21 @@
 from __future__ import annotations
 
 import time
+import wave
 from pathlib import Path
 from typing import List, Optional
 
 from .base import EngineAdapter, EngineResult
+
+
+def _audio_duration_seconds(path: str | Path) -> Optional[float]:
+    try:
+        with wave.open(str(path), "rb") as w:
+            frames = w.getnframes()
+            rate = w.getframerate()
+            return frames / float(rate)
+    except Exception:
+        return None
 
 
 class WhisperCppEngine(EngineAdapter):
@@ -253,6 +264,7 @@ class WhisperCppEngine(EngineAdapter):
     def transcribe(self, audio_path: str | Path, model: str, language: str, **kwargs) -> EngineResult:
         start = time.time()
         audio_path = Path(audio_path)
+        duration = _audio_duration_seconds(audio_path)
 
         # Prefer the python binding for speed, but fall back to the CLI if it fails.
         transcript: str
@@ -268,6 +280,9 @@ class WhisperCppEngine(EngineAdapter):
             transcript = self._transcribe_with_cli(audio_path, model, language)
 
         elapsed = time.time() - start
+        rtf = None
+        if duration and duration > 0:
+            rtf = elapsed / duration
 
         return EngineResult(
             engine=self.name,
@@ -275,6 +290,6 @@ class WhisperCppEngine(EngineAdapter):
             audio_path=str(audio_path),
             transcript=str(transcript).strip(),
             elapsed_seconds=elapsed,
-            real_time_factor=None,
+            real_time_factor=rtf,
             info={"model": model, "language": language},
         )
