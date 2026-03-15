@@ -1,0 +1,20 @@
+[project]
+name = "transcribebench"
+version = "0.1.0"
+description = "Local Dutch transcription benchmarking tool for Apple Silicon (Whisper-class models)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [ { name = "TranscribeBench" } ]
+
+dependencies = [
+  "pyyaml>=6.0",
+  "python-dotenv>=1.0",  # optional: config overrides via env
+]
+
+[project.urls]
+"Source" = "https://example.com/TranscribeBench"
+
+[build-system]
+requires = ["setuptools>=61.0","wheel"]
+build-backend = "setuptools.build_meta"

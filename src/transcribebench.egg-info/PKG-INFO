@@ -1,0 +1,69 @@
+Metadata-Version: 2.4
+Name: transcribebench
+Version: 0.1.0
+Summary: Local Dutch transcription benchmarking tool for Apple Silicon (Whisper-class models).
+Author: TranscribeBench
+License: MIT
+Project-URL: Source, https://example.com/TranscribeBench
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: python-dotenv>=1.0
+
+# TranscribeBench
+
+A reproducible local benchmark tool for comparing Dutch transcription setups on Apple Silicon.
+
+## 🎯 Goal
+Build a **reproducible local benchmark** that compares serious, practical large-model transcription setups — starting with a **Metal/MLX Whisper baseline** and a handful of challenger engines — on a fixed Dutch Common Voice subset.
+
+## ✅ Scope (v1)
+- **Language:** Dutch (`nl`) only
+- **Dataset:** reproducible subset from Mozilla Common Voice (cached locally)
+- **Engines:**
+  - `mlx-whisper` / Metal (baseline)
+  - `faster-whisper`
+  - `whisper.cpp`
+- **Benchmark outputs:**
+  - WER, CER, runtime, real-time factor, failures
+  - Markdown, JSON, CSV reports
+- **Design:**
+  - modular pipeline (dataset provider, engine adapters, runner, report generator)
+  - configuration via file (no hard-coded values)
+  - CLI with `setup`, `fetch-dataset`, `run-benchmark`, `report`
+
+## 🧩 Project layout
+- `src/transcribebench/` — source code
+- `config.yaml` — example configuration (YAML preferred)
+- `TODO.md` — roadmap + next steps
+- `tests/` — unit tests for core logic
+
+## 🧠 Benchmark philosophy
+This project is intentionally narrow and pragmatic. The goal is to compare **practical large-model transcription setups** on a realistic Dutch dataset, focusing on:
+- reproducibility (fixed dataset subset + fixed seed)
+- clear, comparable outputs (WER/CER + runtime metrics)
+- minimal “magic” (no hidden autotuning or random sampling)
+
+## 🧰 Supported engines (v1)
+- **MLX Whisper** (Metal / Apple Silicon) — baseline
+- **faster-whisper** — PyTorch-based challenger
+- **whisper.cpp** — C++ inference
+
+## 🗂 Dataset source
+This benchmark uses a deterministic subset of **Mozilla Common Voice** (Dutch), downloaded and cached locally.
+
+## 🚀 Quick start (v1)
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+
+# Inspect / edit config.yaml
+python -m transcribebench.cli fetch-dataset
+python -m transcribebench.cli run-benchmark
+python -m transcribebench.cli report
+```
+
+## 📌 Notes
+- This repo is intentionally **not** trying to be an exhaustive benchmark suite.
+- The focus is on **practical reproducibility**, so we keep the first release narrow and clear.

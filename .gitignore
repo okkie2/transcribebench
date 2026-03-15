@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+
+# Editor
+.vscode/
+.idea/
+
+# Output
+output/
+results/
+
+# Benchmark artifacts
+runs/
+reports/
+
+dataset_cache/

@@ -1,0 +1,166 @@
+{
+  "config": {
+    "language": "nl",
+    "dataset": {
+      "provider": "common_voice",
+      "sample_size": 2,
+      "seed": 42,
+      "url": "file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz"
+    },
+    "output": {
+      "results_dir": "runs_test",
+      "reports_dir": "reports_test",
+      "dataset_cache": "dataset_cache"
+    },
+    "engines": {
+      "mlx_whisper": {
+        "enabled": true,
+        "model": "mlx-community/whisper-large-v3-turbo"
+      },
+      "faster_whisper": {
+        "enabled": true,
+        "model": "guillaumekln/faster-whisper-small"
+      },
+      "faster_whisper_large": {
+        "enabled": true,
+        "model": "guillaumekln/faster-whisper-large-v2"
+      },
+      "whisper_cpp": {
+        "enabled": true,
+        "model": "tiny"
+      }
+    }
+  },
+  "metrics": {
+    "total_samples": 2,
+    "engines": [
+      "mlx_whisper",
+      "faster_whisper",
+      "faster_whisper_large",
+      "whisper_cpp"
+    ],
+    "failures": 0
+  },
+  "results": [
+    {
+      "engine": "mlx_whisper",
+      "sample_id": "nl-0000",
+      "audio_path": "dataset_cache/nl/audio/nl-0000.mp3",
+      "transcript": "Bij de schietkraam hadden ze een grote teddybeer gewonnen.",
+      "elapsed_seconds": 1.190708875656128,
+      "real_time_factor": null,
+      "info": {
+        "model": "mlx-community/whisper-large-v3-turbo",
+        "language": "nl"
+      },
+      "reference": "Bij de schietkraam hadden ze een grote teddybeer gewonnen.",
+      "wer": 0.0,
+      "cer": 0.0
+    },
+    {
+      "engine": "faster_whisper",
+      "sample_id": "nl-0000",
+      "audio_path": "dataset_cache/nl/audio/nl-0000.mp3",
+      "transcript": "Bij de schietkraam hadden ze een grote teddybear gewonnen.",
+      "elapsed_seconds": 1.3344151973724365,
+      "real_time_factor": null,
+      "info": {
+        "model": "guillaumekln/faster-whisper-small",
+        "language": "nl"
+      },
+      "reference": "Bij de schietkraam hadden ze een grote teddybeer gewonnen.",
+      "wer": 0.1111111111111111,
+      "cer": 0.017241379310344827
+    },
+    {
+      "engine": "faster_whisper_large",
+      "sample_id": "nl-0000",
+      "audio_path": "dataset_cache/nl/audio/nl-0000.mp3",
+      "transcript": "Bij de schietkraam hadden ze een grote teddybeer gewonnen.",
+      "elapsed_seconds": 6.978862285614014,
+      "real_time_factor": null,
+      "info": {
+        "model": "guillaumekln/faster-whisper-large-v2",
+        "language": "nl"
+      },
+      "reference": "Bij de schietkraam hadden ze een grote teddybeer gewonnen.",
+      "wer": 0.0,
+      "cer": 0.0
+    },
+    {
+      "engine": "whisper_cpp",
+      "sample_id": "nl-0000",
+      "audio_path": "dataset_cache/nl/audio/nl-0000.mp3",
+      "transcript": "Bij de schietkram hadden ze een grote Teddybeer gewonnen.",
+      "elapsed_seconds": 0.6015701293945312,
+      "real_time_factor": null,
+      "info": {
+        "model": "tiny",
+        "language": "nl"
+      },
+      "reference": "Bij de schietkraam hadden ze een grote teddybeer gewonnen.",
+      "wer": 0.2222222222222222,
+      "cer": 0.034482758620689655
+    },
+    {
+      "engine": "mlx_whisper",
+      "sample_id": "nl-0001",
+      "audio_path": "dataset_cache/nl/audio/nl-0001.mp3",
+      "transcript": "U weet dat ik het vragenrechten als een fundamenteel parlementair recht beschouw.",
+      "elapsed_seconds": 0.5010719299316406,
+      "real_time_factor": null,
+      "info": {
+        "model": "mlx-community/whisper-large-v3-turbo",
+        "language": "nl"
+      },
+      "reference": "U weet dat ik het vragenrecht als een fundamenteel parlementair recht beschouw.",
+      "wer": 0.08333333333333333,
+      "cer": 0.02531645569620253
+    },
+    {
+      "engine": "faster_whisper",
+      "sample_id": "nl-0001",
+      "audio_path": "dataset_cache/nl/audio/nl-0001.mp3",
+      "transcript": "U weet dat ik het vragen rechte als een fundamenteel parlementaire recht is gaan.",
+      "elapsed_seconds": 1.1724867820739746,
+      "real_time_factor": null,
+      "info": {
+        "model": "guillaumekln/faster-whisper-small",
+        "language": "nl"
+      },
+      "reference": "U weet dat ik het vragenrecht als een fundamenteel parlementair recht beschouw.",
+      "wer": 0.4166666666666667,
+      "cer": 0.12658227848101267
+    },
+    {
+      "engine": "faster_whisper_large",
+      "sample_id": "nl-0001",
+      "audio_path": "dataset_cache/nl/audio/nl-0001.mp3",
+      "transcript": "U weet dat ik het vragenrechten als een fundamenteel parlementair recht beschouw.",
+      "elapsed_seconds": 4.708128929138184,
+      "real_time_factor": null,
+      "info": {
+        "model": "guillaumekln/faster-whisper-large-v2",
+        "language": "nl"
+      },
+      "reference": "U weet dat ik het vragenrecht als een fundamenteel parlementair recht beschouw.",
+      "wer": 0.08333333333333333,
+      "cer": 0.02531645569620253
+    },
+    {
+      "engine": "whisper_cpp",
+      "sample_id": "nl-0001",
+      "audio_path": "dataset_cache/nl/audio/nl-0001.mp3",
+      "transcript": "In het weten dat ik het vrijnrichten als een familie op een terrecht beschang.",
+      "elapsed_seconds": 0.5616130828857422,
+      "real_time_factor": null,
+      "info": {
+        "model": "tiny",
+        "language": "nl"
+      },
+      "reference": "U weet dat ik het vragenrecht als een fundamenteel parlementair recht beschouw.",
+      "wer": 0.75,
+      "cer": 0.43037974683544306
+    }
+  ]
+}

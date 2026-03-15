@@ -1,0 +1,28 @@
+# Test config for whisper.cpp CLI fallback (uses tiny model for speed)
+
+language: nl
+
+dataset:
+  provider: common_voice
+  sample_size: 2
+  seed: 42
+  url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
+
+engines:
+  mlx_whisper:
+    enabled: true
+    model: mlx-community/whisper-large-v3-turbo
+  faster_whisper:
+    enabled: true
+    model: guillaumekln/faster-whisper-small
+  faster_whisper_large:
+    enabled: true
+    model: guillaumekln/faster-whisper-large-v2
+  whisper_cpp:
+    enabled: true
+    model: tiny
+
+output:
+  results_dir: runs_test
+  reports_dir: reports_test
+  dataset_cache: dataset_cache

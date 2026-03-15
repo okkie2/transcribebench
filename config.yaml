@@ -1,0 +1,32 @@
+# TranscribeBench configuration (v1)
+
+language: nl
+
+dataset:
+  provider: common_voice
+  sample_size: 5
+  seed: 42
+  # Use a local Common Voice download (avoid remote 404s).
+  # Update the path below to where you saved the archive.
+  url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
+
+engines:
+  mlx_whisper:
+    enabled: true
+    model: mlx-community/whisper-large-v3-turbo
+  faster_whisper:
+    enabled: true
+    model: guillaumekln/faster-whisper-small
+  faster_whisper_large:
+    enabled: true
+    model: guillaumekln/faster-whisper-large-v2
+  whisper_cpp:
+    enabled: true
+    # whisper.cpp models (preconverted names) include: tiny, base, small, medium, large-v1, large
+    # For a local ggml file, you can pass the full path to the .bin file.
+    model: large-v1
+
+output:
+  results_dir: runs
+  reports_dir: reports
+  dataset_cache: dataset_cache

@@ -1,0 +1,28 @@
+# Benchmark config with 10 samples using whisper.cpp large-v1 model
+
+language: nl
+
+dataset:
+  provider: common_voice
+  sample_size: 10
+  seed: 42
+  url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
+
+engines:
+  mlx_whisper:
+    enabled: true
+    model: mlx-community/whisper-large-v3-turbo
+  faster_whisper:
+    enabled: true
+    model: guillaumekln/faster-whisper-small
+  faster_whisper_large:
+    enabled: true
+    model: guillaumekln/faster-whisper-large-v2
+  whisper_cpp:
+    enabled: true
+    model: large-v1
+
+output:
+  results_dir: runs_10_largev1
+  reports_dir: reports_10_largev1
+  dataset_cache: dataset_cache
