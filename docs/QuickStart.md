@@ -24,6 +24,12 @@ Install optional dependencies for engine runtimes:
 pip install "faster-whisper" torch mlx-whisper parakeet-mlx
 ```
 
+Apple-native engines (`apple_speech`, `apple_dictation`) use a small Swift helper that is built locally from `tools/apple_speech_cli.swift`. On macOS 26+, you can build it with:
+
+```bash
+make build-apple-speech-helper
+```
+
 ## 2) Start the interactive CLI UI
 
 ```bash
@@ -42,6 +48,11 @@ Menu actions:
 - Select engine/model pairs
 - Show status
 
+Notes for Apple-native engines:
+- `apple_speech` uses `SpeechTranscriber`
+- `apple_dictation` uses `DictationTranscriber`
+- On this machine, Dutch (`nl-NL`) works via `apple_dictation`
+
 ## 3) Run benchmark
 
 Choose `Run benchmark` from the menu.
@@ -53,7 +64,9 @@ Benchmark run outputs:
 - `artifacts/reports/latest/report.md`
 - `artifacts/reports/latest/results.csv`
 
-`report.md` contains per engine/model metrics (engine, model, WER, CER, time_seconds).
+`report.md` contains:
+- a compact benchmark metadata table
+- a per engine/model overview table with WER, CER, and time
 
 Preferred CLI subcommands (if needed):
 - `transcribebench prepare-environment`

@@ -228,9 +228,7 @@ This is the high-level human-readable summary.
 
 It currently includes:
 
-- total sample count
-- engines evaluated
-- failure count
+- a compact benchmark metadata table
 - a per-engine/model summary table with average WER, average CER, and average transcription time
 
 `report.md` is the fastest way to review a completed run, while `results.json` remains the source of truth for detailed inspection.

@@ -64,6 +64,8 @@ Apple support currently splits into two distinct paths in this repo:
 - `apple_speech`: `SpeechTranscriber`-based
 - `apple_dictation`: `DictationTranscriber`-based
 
+On this machine, Dutch (`nl-NL`) works through `apple_dictation`.
+
 Typical model sizes:
 
 | Model             | Size    |
@@ -132,6 +134,8 @@ artifacts/results/latest/results.json
 artifacts/reports/latest/report.md
 artifacts/reports/latest/results.csv
 ```
+
+`report.md` now starts with a compact benchmark metadata table followed by the per-engine/model overview table.
 
 ---
 

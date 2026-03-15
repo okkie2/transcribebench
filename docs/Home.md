@@ -12,4 +12,5 @@ Start here:
 - See [QuickStart](QuickStart) for the menu-based workflow
 - See [Benchmark Methodology](Benchmark) for datasets, metrics, results, and hardware context
 - See [Architecture](Architecture) for the pipeline and adapter structure
+- Apple-native paths currently split into `apple_speech` (`SpeechTranscriber`) and `apple_dictation` (`DictationTranscriber`)
 - Terminology reference: [Ubiquitous Language](ubiquitous-language)
