@@ -8,6 +8,7 @@ src/transcribebench/runner.py
 src/transcribebench.egg-info/PKG-INFO
 src/transcribebench.egg-info/SOURCES.txt
 src/transcribebench.egg-info/dependency_links.txt
+src/transcribebench.egg-info/entry_points.txt
 src/transcribebench.egg-info/requires.txt
 src/transcribebench.egg-info/top_level.txt
 src/transcribebench/dataset/__init__.py
@@ -16,5 +17,7 @@ src/transcribebench/engines/__init__.py
 src/transcribebench/engines/base.py
 src/transcribebench/engines/faster_whisper.py
 src/transcribebench/engines/mlx_whisper.py
+src/transcribebench/engines/parakeet_mlx.py
 src/transcribebench/engines/whisper_cpp.py
 tests/test_config.py
+tests/test_parakeet_mlx.py

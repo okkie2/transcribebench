@@ -12,58 +12,202 @@ Requires-Dist: python-dotenv>=1.0
 
 # TranscribeBench
 
-A reproducible local benchmark tool for comparing Dutch transcription setups on Apple Silicon.
+TranscribeBench is a benchmarking tool for **speech-to-text engines**.
 
-## 🎯 Goal
-Build a **reproducible local benchmark** that compares serious, practical large-model transcription setups — starting with a **Metal/MLX Whisper baseline** and a handful of challenger engines — on a fixed Dutch Common Voice subset.
+It runs multiple transcription engines on the same audio dataset and compares their output against ground-truth transcripts using objective metrics such as:
 
-## ✅ Scope (v1)
-- **Language:** Dutch (`nl`) only
-- **Dataset:** reproducible subset from Mozilla Common Voice (cached locally)
-- **Engines:**
-  - `mlx-whisper` / Metal (baseline)
-  - `faster-whisper`
-  - `whisper.cpp`
-- **Benchmark outputs:**
-  - WER, CER, runtime, real-time factor, failures
-  - Markdown, JSON, CSV reports
-- **Design:**
-  - modular pipeline (dataset provider, engine adapters, runner, report generator)
-  - configuration via file (no hard-coded values)
-  - CLI with `setup`, `fetch-dataset`, `run-benchmark`, `report`
+* Word Error Rate (WER)
+* Character Error Rate (CER)
 
-## 🧩 Project layout
-- `src/transcribebench/` — source code
-- `config.yaml` — example configuration (YAML preferred)
-- `TODO.md` — roadmap + next steps
-- `tests/` — unit tests for core logic
+The goal is simple: determine which engine and model performs best for **your language, dataset, and hardware**.
 
-## 🧠 Benchmark philosophy
-This project is intentionally narrow and pragmatic. The goal is to compare **practical large-model transcription setups** on a realistic Dutch dataset, focusing on:
-- reproducibility (fixed dataset subset + fixed seed)
-- clear, comparable outputs (WER/CER + runtime metrics)
-- minimal “magic” (no hidden autotuning or random sampling)
+Project repository:
 
-## 🧰 Supported engines (v1)
-- **MLX Whisper** (Metal / Apple Silicon) — baseline
-- **faster-whisper** — PyTorch-based challenger
-- **whisper.cpp** — C++ inference
+[https://github.com/okkie2/transcribebench](https://github.com/okkie2/transcribebench)
 
-## 🗂 Dataset source
-This benchmark uses a deterministic subset of **Mozilla Common Voice** (Dutch), downloaded and cached locally.
+---
 
-## 🚀 Quick start (v1)
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+## Why this project exists
 
-# Inspect / edit config.yaml
-python -m transcribebench.cli fetch-dataset
-python -m transcribebench.cli run-benchmark
-python -m transcribebench.cli report
+Many transcription tools (for example Microsoft Teams) rely on **cloud processing**, meaning audio recordings are sent to external services.
+
+For organisations and individuals concerned with **privacy and data sovereignty**, this can be undesirable.
+
+At the same time, a growing ecosystem of **local speech-to-text engines** has emerged that can run entirely on personal hardware.
+
+TranscribeBench exists to answer a practical question:
+
+> Which local transcription engine performs best?
+
+The project originated while developing:
+
+AutoTranscribe2
+[https://github.com/okkie2/AutoTranscribe2](https://github.com/okkie2/AutoTranscribe2)
+
+AutoTranscribe2 aims to provide a **fully local transcription pipeline** where audio never leaves the user's machine.
+
+---
+
+## Hardware requirements
+
+TranscribeBench runs transcription models locally. Hardware requirements therefore depend on the models you benchmark.
+
+The current setup is primarily tested on:
+
+* **Apple Silicon Macs (M1 / M2 / M3 / M4)**
+* macOS
+* Python 3.11+
+
+Example environment:
+
+```
+Machine: Apple MacBook Pro (M4)
+RAM: 16–32 GB recommended
+Python: 3.13
 ```
 
-## 📌 Notes
-- This repo is intentionally **not** trying to be an exhaustive benchmark suite.
-- The focus is on **practical reproducibility**, so we keep the first release narrow and clear.
+Some engines in this repository use the **MLX runtime**, which is optimized for Apple Silicon GPUs.
+
+Typical model sizes:
+
+| Model             | Size    |
+| ----------------- | ------- |
+| whisper-large-v3  | ~3 GB   |
+| parakeet-ctc-1.1b | ~4–5 GB |
+
+Allow roughly **10–15 GB disk space** for models and dataset caches.
+
+More details are available in the Wiki.
+
+---
+
+## Quick Start
+
+Clone the repository:
+
+```
+git clone https://github.com/okkie2/transcribebench
+cd transcribebench
+```
+
+Install the tool:
+
+```
+pip install -e .
+```
+
+Start the interactive CLI:
+
+```
+make menu
+```
+
+You will see:
+
+```
+TranscribeBench Menu
+
+1. Run benchmark
+2. Set sample size
+3. Select engines
+4. Show status
+5. Open most recent report
+6. Exit
+```
+
+---
+
+## Running your first benchmark
+
+1. Choose **Select engines** to enable transcription engines.
+2. Choose **Run benchmark**.
+
+TranscribeBench automatically:
+
+* verifies the environment
+* prepares the dataset cache
+* runs the selected engines
+* generates a benchmark report
+
+Results are written to:
+
+```
+artifacts/results/latest/results.json
+artifacts/reports/latest/report.md
+artifacts/reports/latest/results.csv
+```
+
+---
+
+## Example output
+
+Example comparison of two engines:
+
+| engine      | model            | WER   | CER   | time_seconds |
+| ----------- | ---------------- | ----- | ----- | ------------ |
+| mlx_whisper | whisper-large-v3 | 0.078 | 0.023 | 1.4          |
+| whisper_cpp | large-v1         | 0.095 | 0.031 | 0.9          |
+
+Lower WER/CER indicates better transcription accuracy.
+
+---
+
+## Repository structure
+
+```
+src/        application code
+config/     benchmark configurations
+artifacts/  benchmark results and reports
+.cache/     rebuildable cache (datasets, models)
+docs/       documentation used for the wiki
+```
+
+Terminology used in this project is defined in:
+
+```
+docs/ubiquitous-language.md
+```
+
+---
+
+## Documentation
+
+More detailed documentation is available in the Wiki:
+
+* Architecture
+* Benchmark methodology
+* Dataset adapters
+* Engine integrations
+
+The Markdown files in `docs/` can be used directly as GitHub Wiki pages.
+
+---
+
+## Project status
+
+This project is experimental.
+
+Planned improvements include:
+
+* additional engine integrations
+* improved benchmarking metrics
+* reproducible benchmark reports
+* multi-language evaluation
+
+---
+
+## Contributing
+
+Contributions are welcome, particularly in:
+
+* new engine integrations
+* dataset adapters
+* improved evaluation metrics
+* benchmarking visualisation
+
+---
+
+## License
+
+See the repository license file.
+
