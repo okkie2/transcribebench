@@ -13,4 +13,5 @@ def test_load_default_config(tmp_path: pathlib.Path) -> None:
     assert config.language == "nl"
     assert config.dataset.sample_size == 50
     assert config.dataset.url.startswith("http")
-    assert config.engines.mlx_whisper.enabled
+    assert len(config.engines) > 0
+    assert any(e.engine == "mlx_whisper" and e.enabled for e in config.engines)

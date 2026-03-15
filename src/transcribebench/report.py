@@ -26,19 +26,19 @@ class Reporter:
         lines.append(f"- Failures: {metrics.get('failures', 0)}")
         lines.append("\n---\n")
 
-        lines.append("## Per-engine overview\n")
-        per_engine = metrics.get("per_engine", {})
-        if per_engine:
-            lines.append("| Engine | Avg WER | Avg CER | Avg time (s) | Avg RTF |")
-            lines.append("| --- | ---: | ---: | ---: | ---: |")
-            for engine_name, stats in per_engine.items():
+        lines.append("## Per engine/model overview\n")
+        per_engine_model = metrics.get("per_engine_model", {})
+        if per_engine_model:
+            lines.append("| engine | model | WER | CER | time_seconds |")
+            lines.append("| --- | --- | ---: | ---: | ---: |")
+            for _, stats in per_engine_model.items():
+                engine_name = str(stats.get("engine", ""))
+                model_name = str(stats.get("model", ""))
                 avg_wer = float(stats.get("avg_wer", 0.0))
                 avg_cer = float(stats.get("avg_cer", 0.0))
                 avg_time = float(stats.get("avg_transcription_time_seconds", 0.0))
-                avg_rtf = stats.get("avg_rtf")
-                rtf_str = f"{float(avg_rtf):.3f}" if avg_rtf is not None else "n/a"
                 lines.append(
-                    f"| {engine_name} | {avg_wer:.3f} | {avg_cer:.3f} | {avg_time:.3f} | {rtf_str} |"
+                    f"| {engine_name} | {model_name} | {avg_wer:.3f} | {avg_cer:.3f} | {avg_time:.3f} |"
                 )
             lines.append("")
         lines.append("(Detailed results are available in `results.csv` and `results.json`.)\n")

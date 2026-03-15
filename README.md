@@ -53,6 +53,20 @@ After completion:
 - raw results: `runs/results.json`
 - report files: `reports/report.md` and `reports/results.csv`
 
+Engine/model configuration now uses pairs:
+
+```yaml
+engines:
+  - engine: mlx_whisper
+    model: whisper-large-v3
+    enabled: true
+  - engine: nemo_ctc
+    model: nvidia/parakeet-ctc-1.1b
+    enabled: true
+```
+
+Reports include separate columns for `engine`, `model`, `WER`, `CER`, and `time_seconds`.
+
 ---
 
 # Why this project exists

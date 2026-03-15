@@ -9,18 +9,18 @@ dataset:
   url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
 
 engines:
-  mlx_whisper:
-    enabled: true
+  - engine: mlx_whisper
     model: mlx-community/whisper-large-v3-turbo
-  faster_whisper:
     enabled: true
+  - engine: faster_whisper
     model: guillaumekln/faster-whisper-small
-  faster_whisper_large:
     enabled: true
+  - engine: faster_whisper_large
     model: guillaumekln/faster-whisper-large-v2
-  whisper_cpp:
     enabled: true
+  - engine: whisper_cpp
     model: large-v1
+    enabled: true
 
 output:
   results_dir: runs_10_largev1

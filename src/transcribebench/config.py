@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import dataclasses
 import pathlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List
 
 import yaml
 
 
 @dataclasses.dataclass(frozen=True)
-class EngineConfig:
+class EngineSpec:
+    engine: str
+    model: str
     enabled: bool = True
-    # Default to a model that is publicly available and reasonable for benchmarking.
-    model: str = "openai/whisper-small"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -32,16 +32,14 @@ class OutputConfig:
     dataset_cache: str = "dataset_cache"
 
 
-@dataclasses.dataclass(frozen=True)
-class EnginesConfig:
-    mlx_whisper: EngineConfig = EngineConfig()
-    faster_whisper: EngineConfig = EngineConfig()
-    faster_whisper_large: EngineConfig = EngineConfig()
-    whisper_cpp: EngineConfig = EngineConfig()
-    parakeet_ctc_1_1b: EngineConfig = EngineConfig(
-        enabled=False,
-        model="nvidia/parakeet-ctc-1.1b",
-    )
+def _default_engines() -> list[EngineSpec]:
+    return [
+        EngineSpec(engine="mlx_whisper", model="openai/whisper-small", enabled=True),
+        EngineSpec(engine="faster_whisper", model="openai/whisper-small", enabled=True),
+        EngineSpec(engine="faster_whisper_large", model="openai/whisper-large-v3", enabled=True),
+        EngineSpec(engine="whisper_cpp", model="small", enabled=True),
+        EngineSpec(engine="nemo_ctc", model="nvidia/parakeet-ctc-1.1b", enabled=False),
+    ]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -49,7 +47,7 @@ class Config:
     language: str = "nl"
     dataset: DatasetConfig = DatasetConfig()
     output: OutputConfig = OutputConfig()
-    engines: EnginesConfig = EnginesConfig()
+    engines: list[EngineSpec] = dataclasses.field(default_factory=_default_engines)
 
     @classmethod
     def load(cls, path: str | pathlib.Path = "config.yaml") -> "Config":
@@ -57,11 +55,12 @@ class Config:
         with path.open("r", encoding="utf-8") as f:
             raw = yaml.safe_load(f) or {}
 
-        # Simple merge of defaults + config file values.
         language = raw.get("language", cls().language)
         dataset_raw = raw.get("dataset", {})
         output_raw = raw.get("output", {})
-        engines_raw: Dict[str, Any] = raw.get("engines", {})
+        engines_raw = raw.get("engines")
+
+        engines = cls._parse_engines(engines_raw)
 
         return cls(
             language=language,
@@ -76,11 +75,61 @@ class Config:
                 reports_dir=output_raw.get("reports_dir", cls().output.reports_dir),
                 dataset_cache=output_raw.get("dataset_cache", cls().output.dataset_cache),
             ),
-            engines=EnginesConfig(
-                mlx_whisper=EngineConfig(**(engines_raw.get("mlx_whisper", {}) or {})),
-                faster_whisper=EngineConfig(**(engines_raw.get("faster_whisper", {}) or {})),
-                faster_whisper_large=EngineConfig(**(engines_raw.get("faster_whisper_large", {}) or {})),
-                whisper_cpp=EngineConfig(**(engines_raw.get("whisper_cpp", {}) or {})),
-                parakeet_ctc_1_1b=EngineConfig(**(engines_raw.get("parakeet_ctc_1_1b", {}) or {})),
-            ),
+            engines=engines,
         )
+
+    @staticmethod
+    def _parse_engines(engines_raw: Any) -> list[EngineSpec]:
+        if isinstance(engines_raw, list):
+            parsed: list[EngineSpec] = []
+            for item in engines_raw:
+                if not isinstance(item, dict):
+                    continue
+                engine = item.get("engine")
+                model = item.get("model")
+                if not engine or not model:
+                    continue
+                parsed.append(
+                    EngineSpec(
+                        engine=str(engine),
+                        model=str(model),
+                        enabled=bool(item.get("enabled", True)),
+                    )
+                )
+            return parsed or _default_engines()
+
+        # Backward compatibility with the old mapping format:
+        # engines:
+        #   mlx_whisper: { enabled: true, model: ... }
+        if isinstance(engines_raw, dict):
+            legacy_to_engine = {
+                "mlx_whisper": "mlx_whisper",
+                "faster_whisper": "faster_whisper",
+                "faster_whisper_large": "faster_whisper_large",
+                "whisper_cpp": "whisper_cpp",
+                "parakeet_ctc_1_1b": "nemo_ctc",
+                "nemo_ctc": "nemo_ctc",
+            }
+            parsed: list[EngineSpec] = []
+            for key, value in engines_raw.items():
+                if key not in legacy_to_engine:
+                    continue
+                cfg = value or {}
+                if not isinstance(cfg, dict):
+                    continue
+                model = cfg.get("model")
+                if not model:
+                    continue
+                parsed.append(
+                    EngineSpec(
+                        engine=legacy_to_engine[key],
+                        model=str(model),
+                        enabled=bool(cfg.get("enabled", True)),
+                    )
+                )
+            return parsed or _default_engines()
+
+        return _default_engines()
+
+    def enabled_engines(self) -> list[EngineSpec]:
+        return [e for e in self.engines if e.enabled]

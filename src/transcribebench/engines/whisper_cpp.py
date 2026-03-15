@@ -28,7 +28,7 @@ class WhisperCppEngine(EngineAdapter):
         self._binding_failed = False
 
     @property
-    def name(self) -> str:
+    def engine_name(self) -> str:
         return "whisper_cpp"
 
     def check_requirements(self) -> List[str]:
@@ -285,7 +285,8 @@ class WhisperCppEngine(EngineAdapter):
             rtf = elapsed / duration
 
         return EngineResult(
-            engine=self.name,
+            engine=self.engine_name,
+            model=model,
             sample_id=audio_path.stem,
             audio_path=str(audio_path),
             transcript=str(transcript).strip(),

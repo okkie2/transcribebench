@@ -63,9 +63,14 @@ def _simple_cer(ref: str, hyp: str) -> float:
 class BenchmarkRunner:
     """Runs a benchmark across engines and a dataset."""
 
-    def __init__(self, config: Config, engines: list[EngineAdapter]):
+    @dataclasses.dataclass(frozen=True)
+    class RunTarget:
+        adapter: EngineAdapter
+        model: str
+
+    def __init__(self, config: Config, targets: list["BenchmarkRunner.RunTarget"]):
         self.config = config
-        self.engines = engines
+        self.targets = targets
         self.dataset_provider = CommonVoiceProvider(config.output.dataset_cache)
 
     def run(self) -> dict:
@@ -81,18 +86,19 @@ class BenchmarkRunner:
         failures = 0
 
         for sample in samples:
-            for engine in self.engines:
+            for target in self.targets:
                 start = time.time()
                 try:
-                    result = engine.transcribe(
+                    result = target.adapter.transcribe(
                         audio_path=sample.audio_path,
-                        model=getattr(self.config.engines, engine.name).model,
+                        model=target.model,
                         language=self.config.language,
                     )
                 except Exception as e:
                     failures += 1
                     result = EngineResult(
-                        engine=engine.name,
+                        engine=target.adapter.engine_name,
+                        model=target.model,
                         sample_id=sample.id,
                         audio_path=sample.audio_path,
                         transcript="",
@@ -114,12 +120,12 @@ class BenchmarkRunner:
                     }
                 )
 
-        per_engine: dict[str, dict[str, float | int | None]] = {}
-        by_engine: dict[str, list[dict]] = defaultdict(list)
+        per_engine_model: dict[str, dict[str, float | int | None | str]] = {}
+        by_engine_model: dict[tuple[str, str], list[dict]] = defaultdict(list)
         for row in results:
-            by_engine[row["engine"]].append(row)
+            by_engine_model[(row["engine"], row["model"])].append(row)
 
-        for engine_name, rows in by_engine.items():
+        for (engine_name, model_name), rows in by_engine_model.items():
             count = len(rows)
             avg_wer = sum(float(r["wer"]) for r in rows) / max(1, count)
             avg_cer = sum(float(r["cer"]) for r in rows) / max(1, count)
@@ -128,7 +134,9 @@ class BenchmarkRunner:
             rtfs = [float(r["real_time_factor"]) for r in rows if r.get("real_time_factor") is not None]
             avg_rtf = (sum(rtfs) / len(rtfs)) if rtfs else None
 
-            per_engine[engine_name] = {
+            per_engine_model[f"{engine_name}::{model_name}"] = {
+                "engine": engine_name,
+                "model": model_name,
                 "count": count,
                 "avg_wer": avg_wer,
                 "avg_cer": avg_cer,
@@ -138,9 +146,9 @@ class BenchmarkRunner:
 
         metrics = {
             "total_samples": len(samples),
-            "engines": [e.name for e in self.engines],
+            "engines": [t.adapter.engine_name for t in self.targets],
             "failures": failures,
-            "per_engine": per_engine,
+            "per_engine_model": per_engine_model,
         }
 
         output = {
@@ -148,13 +156,7 @@ class BenchmarkRunner:
                 "language": self.config.language,
                 "dataset": dataclasses.asdict(self.config.dataset),
                 "output": dataclasses.asdict(self.config.output),
-                "engines": {
-                    "mlx_whisper": dataclasses.asdict(self.config.engines.mlx_whisper),
-                    "faster_whisper": dataclasses.asdict(self.config.engines.faster_whisper),
-                    "faster_whisper_large": dataclasses.asdict(self.config.engines.faster_whisper_large),
-                    "whisper_cpp": dataclasses.asdict(self.config.engines.whisper_cpp),
-                    "parakeet_ctc_1_1b": dataclasses.asdict(self.config.engines.parakeet_ctc_1_1b),
-                },
+                "engines": [dataclasses.asdict(e) for e in self.config.engines],
             },
             "metrics": metrics,
             "results": results,

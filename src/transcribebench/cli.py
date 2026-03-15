@@ -5,38 +5,34 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
 from .config import Config
-from .engines import MlxWhisperEngine, FasterWhisperEngine, WhisperCppEngine, ParakeetCtcEngine
+from .engines import FasterWhisperEngine, MlxWhisperEngine, ParakeetCtcEngine, WhisperCppEngine
 from .runner import BenchmarkRunner
 
 
-def _build_engines(config: Config):
-    mapping = {
+def _adapter_mapping():
+    return {
         "mlx_whisper": MlxWhisperEngine(),
         "faster_whisper": FasterWhisperEngine("faster_whisper"),
         "faster_whisper_large": FasterWhisperEngine("faster_whisper_large"),
         "whisper_cpp": WhisperCppEngine(),
-        "parakeet_ctc_1_1b": ParakeetCtcEngine(),
+        "nemo_ctc": ParakeetCtcEngine(),
     }
 
-    enabled = []
-    if config.engines.mlx_whisper.enabled:
-        enabled.append("mlx_whisper")
-    if config.engines.faster_whisper.enabled:
-        enabled.append("faster_whisper")
-    if config.engines.faster_whisper_large.enabled:
-        enabled.append("faster_whisper_large")
-    if config.engines.whisper_cpp.enabled:
-        enabled.append("whisper_cpp")
-    if config.engines.parakeet_ctc_1_1b.enabled:
-        enabled.append("parakeet_ctc_1_1b")
 
-    return [mapping[name] for name in enabled if name in mapping]
+def _build_targets(config: Config) -> list[BenchmarkRunner.RunTarget]:
+    adapters = _adapter_mapping()
+    targets: list[BenchmarkRunner.RunTarget] = []
+    for spec in config.enabled_engines():
+        adapter = adapters.get(spec.engine)
+        if adapter is None:
+            continue
+        targets.append(BenchmarkRunner.RunTarget(adapter=adapter, model=spec.model))
+    return targets
 
 
 def _load_raw_config(path: str) -> dict[str, Any]:
@@ -60,11 +56,9 @@ def _set_sample_size(config_path: str, sample_size: int) -> None:
     _save_raw_config(config_path, raw)
 
 
-def _set_engine_enabled(config_path: str, engine_name: str, enabled: bool) -> None:
+def _set_engines(config_path: str, engines: list[dict[str, Any]]) -> None:
     raw = _load_raw_config(config_path)
-    raw.setdefault("engines", {})
-    raw["engines"].setdefault(engine_name, {})
-    raw["engines"][engine_name]["enabled"] = bool(enabled)
+    raw["engines"] = engines
     _save_raw_config(config_path, raw)
 
 
@@ -123,31 +117,36 @@ def _estimate_runtime(config: Config) -> str:
     except Exception:
         return "Estimate unavailable yet (could not read previous results)."
 
-    enabled_engines = [e.name for e in _build_engines(config)]
-    if not enabled_engines:
+    enabled = [(e.engine, e.model) for e in config.enabled_engines()]
+    if not enabled:
         return "Estimate unavailable (no engines enabled)."
 
-    per_engine_avg: dict[str, float] = {}
-    for engine in enabled_engines:
-        engine_rows = [r for r in rows if r.get("engine") == engine and isinstance(r.get("elapsed_seconds"), (int, float))]
-        if engine_rows:
-            per_engine_avg[engine] = sum(float(r["elapsed_seconds"]) for r in engine_rows) / len(engine_rows)
+    per_combo_avg: dict[tuple[str, str], float] = {}
+    for engine, model in enabled:
+        combo_rows = [
+            r
+            for r in rows
+            if r.get("engine") == engine and r.get("model") == model and isinstance(r.get("elapsed_seconds"), (int, float))
+        ]
+        if combo_rows:
+            per_combo_avg[(engine, model)] = sum(float(r["elapsed_seconds"]) for r in combo_rows) / len(combo_rows)
 
-    if not per_engine_avg:
-        return "Estimate unavailable yet (no matching historical engine timings)."
+    if not per_combo_avg:
+        return "Estimate unavailable yet (no matching historical engine/model timings)."
 
     lines = ["Estimated benchmark time (rough):"]
     total_seconds = 0.0
-    for engine in enabled_engines:
-        avg = per_engine_avg.get(engine)
+    for engine, model in enabled:
+        avg = per_combo_avg.get((engine, model))
+        label = f"{engine} ({model})"
         if avg is None:
-            lines.append(f"- {engine}: n/a (no history)")
+            lines.append(f"- {label}: n/a (no history)")
             continue
         estimate = avg * config.dataset.sample_size
         total_seconds += estimate
         lo = max(0.0, estimate * 0.8)
         hi = estimate * 1.2
-        lines.append(f"- {engine}: ~{int(lo // 60)} to {int(hi // 60)} min")
+        lines.append(f"- {label}: ~{int(lo // 60)} to {int(hi // 60)} min")
 
     if total_seconds > 0:
         total_lo = total_seconds * 0.8
@@ -194,14 +193,14 @@ def _show_status(config_path: str) -> None:
     config = Config.load(config_path)
     setup_ready, _ = _check_setup_state()
     dataset_state, dataset_note = _check_dataset_state(config)
-    enabled = [e.name for e in _build_engines(config)]
+    enabled = [f"{e.engine} ({e.model})" for e in config.enabled_engines()]
 
     print("\nCurrent status")
     print(f"- Setup: {'ready' if setup_ready else 'missing'}")
     print(f"- Dataset: {dataset_state} ({dataset_note})")
     print(f"- Sample size: {config.dataset.sample_size}")
     print(f"- Language: {config.language}")
-    print(f"- Enabled engines: {', '.join(enabled) if enabled else 'none'}")
+    print(f"- Enabled engine/model pairs: {', '.join(enabled) if enabled else 'none'}")
     print("- Output files:")
     print(f"  - {Path(config.output.results_dir) / 'results.json'}")
     print(f"  - {Path(config.output.reports_dir) / 'report.md'}")
@@ -229,41 +228,43 @@ def _interactive_set_sample_size(config_path: str) -> None:
 
 
 def _interactive_select_engines(config_path: str) -> None:
-    engine_order = ["mlx_whisper", "faster_whisper", "faster_whisper_large", "whisper_cpp", "parakeet_ctc_1_1b"]
     hints = {
         "mlx_whisper": "Apple Silicon optimized (MLX)",
         "faster_whisper": "Fast CTranslate2 backend",
         "faster_whisper_large": "Large-model faster-whisper",
         "whisper_cpp": "Portable whisper.cpp backend",
-        "parakeet_ctc_1_1b": "NVIDIA NeMo Parakeet CTC",
+        "nemo_ctc": "NVIDIA NeMo CTC runtime",
     }
 
     while True:
         config = Config.load(config_path)
-        state = {
-            "mlx_whisper": config.engines.mlx_whisper.enabled,
-            "faster_whisper": config.engines.faster_whisper.enabled,
-            "faster_whisper_large": config.engines.faster_whisper_large.enabled,
-            "whisper_cpp": config.engines.whisper_cpp.enabled,
-            "parakeet_ctc_1_1b": config.engines.parakeet_ctc_1_1b.enabled,
-        }
-        print("\nSelect engines (toggle by number, Enter to finish):")
-        for idx, name in enumerate(engine_order, start=1):
-            mark = "x" if state[name] else " "
-            print(f"{idx}. [{mark}] {name} - {hints[name]}")
+        engines = list(config.engines)
+        print("\nSelect engine/model pairs (toggle by number, Enter to finish):")
+        for idx, spec in enumerate(engines, start=1):
+            mark = "x" if spec.enabled else " "
+            print(f"{idx}. [{mark}] {spec.engine} ({spec.model}) - {hints.get(spec.engine, '')}".strip())
 
         choice = input("Choice: ").strip()
         if not choice:
-            enabled = [n for n in engine_order if state[n]]
-            print(f"Saved. Enabled engines: {', '.join(enabled) if enabled else 'none'}")
+            enabled = [f"{e.engine} ({e.model})" for e in engines if e.enabled]
+            print(f"Saved. Enabled: {', '.join(enabled) if enabled else 'none'}")
             print(_estimate_runtime(Config.load(config_path)))
             return
-        if not choice.isdigit() or not (1 <= int(choice) <= len(engine_order)):
+        if not choice.isdigit() or not (1 <= int(choice) <= len(engines)):
             print("Invalid selection.")
             continue
 
-        name = engine_order[int(choice) - 1]
-        _set_engine_enabled(config_path, name, not state[name])
+        selected_idx = int(choice) - 1
+        updated: list[dict[str, Any]] = []
+        for i, spec in enumerate(engines):
+            updated.append(
+                {
+                    "engine": spec.engine,
+                    "model": spec.model,
+                    "enabled": (not spec.enabled) if i == selected_idx else spec.enabled,
+                }
+            )
+        _set_engines(config_path, updated)
 
 
 def _open_most_recent_report(config_path: str) -> None:
@@ -282,10 +283,7 @@ def _open_most_recent_report(config_path: str) -> None:
     latest = max(candidates, key=lambda p: p.stat().st_mtime)
     print(f"Most recent report: {latest}")
     print("\n--- report.md ---\n")
-    try:
-        print(latest.read_text(encoding="utf-8"))
-    except Exception as e:
-        print(f"Could not read report: {e}")
+    print(latest.read_text(encoding="utf-8"))
 
 
 def _cmd_menu(args: argparse.Namespace) -> int:
@@ -322,13 +320,17 @@ def _cmd_menu(args: argparse.Namespace) -> int:
 
 def _cmd_setup(args: argparse.Namespace) -> int:
     config = Config.load(args.config)
-    engines = _build_engines(config)
+    targets = _build_targets(config)
 
     messages = []
-    for engine in engines:
-        missing = engine.check_requirements()
+    seen: set[str] = set()
+    for target in targets:
+        if target.adapter.engine_name in seen:
+            continue
+        seen.add(target.adapter.engine_name)
+        missing = target.adapter.check_requirements()
         if missing:
-            messages.append(f"Engine {engine.name} requirements:")
+            messages.append(f"Engine {target.adapter.engine_name} requirements:")
             messages.extend([f"  - {m}" for m in missing])
 
     if messages:
@@ -355,23 +357,23 @@ def _cmd_fetch_dataset(args: argparse.Namespace) -> int:
 
 def _cmd_run_benchmark(args: argparse.Namespace) -> int:
     config = Config.load(args.config)
-    engines = _build_engines(config)
+    targets = _build_targets(config)
 
-    usable_engines = []
-    for engine in engines:
-        missing = engine.check_requirements()
+    usable_targets: list[BenchmarkRunner.RunTarget] = []
+    for target in targets:
+        missing = target.adapter.check_requirements()
         if missing:
-            print(f"Skipping engine {engine.name}: missing requirements:")
+            print(f"Skipping {target.adapter.engine_name} ({target.model}): missing requirements:")
             for m in missing:
                 print(f"  - {m}")
         else:
-            usable_engines.append(engine)
+            usable_targets.append(target)
 
-    if not usable_engines:
+    if not usable_targets:
         print("No usable engines available; please install dependencies or enable a supported engine.")
         return 1
 
-    runner = BenchmarkRunner(config, usable_engines)
+    runner = BenchmarkRunner(config, usable_targets)
     results = runner.run()
     runner.save_results(results)
     print(f"Benchmark complete. Results written to: {config.output.results_dir}")
@@ -386,7 +388,6 @@ def _cmd_report(args: argparse.Namespace) -> int:
         print(f"Report directory does not exist: {out_dir}")
         return 1
 
-    # In this version, report is generated by saving results (no-op if already present)
     print(f"Report artifacts are in: {out_dir}")
     return 0
 
@@ -407,7 +408,6 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command is None or args.command == "menu":
         return _cmd_menu(args)
-
     if args.command == "setup":
         return _cmd_setup(args)
     if args.command == "fetch-dataset":

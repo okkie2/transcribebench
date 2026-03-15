@@ -28,8 +28,8 @@ class ParakeetCtcEngine(EngineAdapter):
         self._model_name: Optional[str] = None
 
     @property
-    def name(self) -> str:
-        return "parakeet_ctc_1_1b"
+    def engine_name(self) -> str:
+        return "nemo_ctc"
 
     def check_requirements(self) -> List[str]:
         missing: List[str] = []
@@ -81,7 +81,8 @@ class ParakeetCtcEngine(EngineAdapter):
                 rtf = elapsed / duration
 
             return EngineResult(
-                engine=self.name,
+                engine=self.engine_name,
+                model=model,
                 sample_id=audio_path.stem,
                 audio_path=str(audio_path),
                 transcript=transcript,
@@ -92,7 +93,8 @@ class ParakeetCtcEngine(EngineAdapter):
         except Exception as e:
             elapsed = time.time() - start
             return EngineResult(
-                engine=self.name,
+                engine=self.engine_name,
+                model=model,
                 sample_id=audio_path.stem,
                 audio_path=str(audio_path),
                 transcript="",

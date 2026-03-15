@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 @dataclasses.dataclass(frozen=True)
 class EngineResult:
     engine: str
+    model: str
     sample_id: str
     audio_path: str
 
@@ -30,8 +31,13 @@ class EngineAdapter(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str:
+    def engine_name(self) -> str:
         ...
+
+    @property
+    def name(self) -> str:
+        # Backwards-compatible alias for older call sites.
+        return self.engine_name
 
     @abstractmethod
     def check_requirements(self) -> list[str]:

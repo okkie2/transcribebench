@@ -27,7 +27,7 @@ class FasterWhisperEngine(EngineAdapter):
         self._engine_name = name
 
     @property
-    def name(self) -> str:
+    def engine_name(self) -> str:
         return self._engine_name
 
     def check_requirements(self) -> List[str]:
@@ -87,7 +87,8 @@ class FasterWhisperEngine(EngineAdapter):
                 rtf = elapsed / duration
 
             return EngineResult(
-                engine=self.name,
+                engine=self.engine_name,
+                model=model,
                 sample_id=audio_path.stem,
                 audio_path=str(audio_path),
                 transcript=transcript.strip(),
@@ -98,7 +99,8 @@ class FasterWhisperEngine(EngineAdapter):
         except Exception as e:
             elapsed = time.time() - start
             return EngineResult(
-                engine=self.name,
+                engine=self.engine_name,
+                model=model,
                 sample_id=audio_path.stem,
                 audio_path=str(audio_path),
                 transcript="",

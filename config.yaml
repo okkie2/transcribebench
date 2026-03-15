@@ -5,21 +5,21 @@ dataset:
   seed: 42
   url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
 engines:
-  mlx_whisper:
-    enabled: true
+  - engine: mlx_whisper
     model: mlx-community/whisper-large-v3-turbo
-  faster_whisper:
-    enabled: false
+    enabled: true
+  - engine: faster_whisper
     model: guillaumekln/faster-whisper-small
-  faster_whisper_large:
-    enabled: true
+    enabled: false
+  - engine: faster_whisper_large
     model: guillaumekln/faster-whisper-large-v2
-  whisper_cpp:
     enabled: true
+  - engine: whisper_cpp
     model: large-v1
-  parakeet_ctc_1_1b:
     enabled: true
+  - engine: nemo_ctc
     model: nvidia/parakeet-ctc-1.1b
+    enabled: true
 output:
   results_dir: runs
   reports_dir: reports
