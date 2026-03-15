@@ -90,6 +90,10 @@ class ParakeetMlxEngine(EngineAdapter):
         if isinstance(output, list):
             parts = [self._extract_text(item) for item in output]
             return " ".join([p for p in parts if p]).strip()
+        for attr in ("text", "transcript", "transcription", "prediction"):
+            val = getattr(output, attr, None)
+            if isinstance(val, str) and val.strip():
+                return val.strip()
         if isinstance(output, dict):
             for key in ("text", "transcript", "transcription", "prediction"):
                 val = output.get(key)

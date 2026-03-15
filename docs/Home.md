@@ -10,4 +10,6 @@ Use the pages in this `docs/` folder as source material for the GitHub Wiki.
 Start here:
 - Launch the interactive CLI UI with `transcribebench` (or `python -m transcribebench.cli`)
 - See [QuickStart](QuickStart) for the menu-based workflow
+- See [Benchmark Methodology](Benchmark) for datasets, metrics, results, and hardware context
+- See [Architecture](Architecture) for the pipeline and adapter structure
 - Terminology reference: [Ubiquitous Language](ubiquitous-language)

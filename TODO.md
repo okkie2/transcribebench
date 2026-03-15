@@ -20,6 +20,8 @@
 
 ## CLI / UX Improvements
 - Improve CLI transparency when downloading speech models by printing a clear pre-download message with engine, model name, and approximate size when known (for example: `Downloading model: parakeet-ctc-1.1b (~4.2 GB)`) before the HuggingFace/tqdm progress bar starts
+- Add a compact metadata table at the top of `report.md` with run timestamp, version, config path, dataset, sample size, total audio duration, engines evaluated, and repository link while keeping the report to a single-page summary
+- Make `report.md` distinguish adapter/runtime failures from real benchmark scores so engine rows with `info.error` are not presented as normal `WER/CER = 1.000` results without a visible failure indicator
 
 ## Longer-term / stretch desires
 - Add structured experiment definitions (train/validation splits)

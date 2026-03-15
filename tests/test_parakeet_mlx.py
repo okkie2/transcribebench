@@ -100,3 +100,13 @@ def test_parakeet_mlx_extracts_text_from_nested_output() -> None:
         }
     )
     assert text == "dit werkt"
+
+
+def test_parakeet_mlx_extracts_text_from_object_output() -> None:
+    class _AlignedResultLike:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+    engine = ParakeetMlxEngine()
+    text = engine._extract_text(_AlignedResultLike("dit komt uit aligned result"))
+    assert text == "dit komt uit aligned result"
