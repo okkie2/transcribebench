@@ -214,4 +214,6 @@ Contributions are welcome, particularly in:
 
 ## License
 
-See the repository license file.
+See [LICENSE.md](/Users/joostokkinga/Code/TranscribeBench/LICENSE.md).
+
+Third-party acknowledgements are listed in [ATTRIBUTIONS.md](/Users/joostokkinga/Code/TranscribeBench/ATTRIBUTIONS.md).
