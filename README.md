@@ -61,6 +61,14 @@ Apple support currently splits into two distinct paths in this repo:
 
 On this machine, Dutch (`nl-NL`) works through `apple_dictation`.
 
+Engine ownership and maintainership:
+
+- Apple owns `apple_dictation`
+- OpenAI owns the Whisper model family
+- SYSTRAN maintains `faster-whisper`
+- Georgi Gerganov maintains `whisper.cpp`
+- NVIDIA owns the Parakeet model family
+
 Typical model sizes:
 
 | Model             | Size    |
