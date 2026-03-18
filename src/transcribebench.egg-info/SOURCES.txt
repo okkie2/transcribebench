@@ -1,3 +1,4 @@
+LICENSE.md
 README.md
 pyproject.toml
 src/transcribebench/__init__.py
@@ -14,10 +15,13 @@ src/transcribebench.egg-info/top_level.txt
 src/transcribebench/dataset/__init__.py
 src/transcribebench/dataset/common_voice.py
 src/transcribebench/engines/__init__.py
+src/transcribebench/engines/apple_speech.py
 src/transcribebench/engines/base.py
 src/transcribebench/engines/faster_whisper.py
 src/transcribebench/engines/mlx_whisper.py
 src/transcribebench/engines/parakeet_mlx.py
 src/transcribebench/engines/whisper_cpp.py
+tests/test_apple_speech.py
 tests/test_config.py
 tests/test_parakeet_mlx.py
+tests/test_report.py

@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eu
+
+if [ -x ".venv/bin/python" ]; then
+  PYTHON=".venv/bin/python"
+else
+  PYTHON="python"
+fi
+
+exec "$PYTHON" -m transcribebench.cli --config config/default.yaml "$@"

@@ -14,6 +14,54 @@ Project repository:
 
 ---
 
+## Quick Start
+
+Clone the repository:
+
+```bash
+git clone https://github.com/okkie2/transcribebench
+cd transcribebench
+```
+
+Install the tool:
+
+```bash
+pip install -e .
+```
+
+Start the interactive CLI from the project root:
+
+```bash
+./TranscribeBench menu
+```
+
+After `pip install -e .`, you can also run:
+
+```bash
+TranscribeBench menu
+```
+
+You can still use:
+
+```bash
+make menu
+```
+
+You will see:
+
+```text
+TranscribeBench Menu
+
+1. Run benchmark
+2. Set sample size
+3. Select engines
+4. Show status
+5. Open most recent report
+6. Exit
+```
+
+---
+
 ## Why this project exists
 
 Many transcription tools (for example Microsoft Teams) rely on **cloud processing**, meaning audio recordings are sent to external services.
@@ -79,42 +127,6 @@ Typical model sizes:
 Allow roughly **10–15 GB disk space** for models and dataset caches.
 
 More details are available in the Wiki.
-
----
-
-## Quick Start
-
-Clone the repository:
-
-```
-git clone https://github.com/okkie2/transcribebench
-cd transcribebench
-```
-
-Install the tool:
-
-```
-pip install -e .
-```
-
-Start the interactive CLI:
-
-```
-make menu
-```
-
-You will see:
-
-```
-TranscribeBench Menu
-
-1. Run benchmark
-2. Set sample size
-3. Select engines
-4. Show status
-5. Open most recent report
-6. Exit
-```
 
 ---
 

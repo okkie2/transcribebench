@@ -7,13 +7,14 @@ License: MIT
 Project-URL: Source, https://example.com/TranscribeBench
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
+License-File: LICENSE.md
 Requires-Dist: pyyaml>=6.0
 Requires-Dist: python-dotenv>=1.0
+Dynamic: license-file
 
 # TranscribeBench
 
 TranscribeBench is a benchmarking tool for **speech-to-text engines**.
-
 It runs multiple transcription engines on the same audio dataset and compares their output against ground-truth transcripts using objective metrics such as:
 
 * Word Error Rate (WER)
@@ -27,14 +28,59 @@ Project repository:
 
 ---
 
+## Quick Start
+
+Clone the repository:
+
+```bash
+git clone https://github.com/okkie2/transcribebench
+cd transcribebench
+```
+
+Install the tool:
+
+```bash
+pip install -e .
+```
+
+Start the interactive CLI from the project root:
+
+```bash
+./TranscribeBench menu
+```
+
+After `pip install -e .`, you can also run:
+
+```bash
+TranscribeBench menu
+```
+
+You can still use:
+
+```bash
+make menu
+```
+
+You will see:
+
+```text
+TranscribeBench Menu
+
+1. Run benchmark
+2. Set sample size
+3. Select engines
+4. Show status
+5. Open most recent report
+6. Exit
+```
+
+---
+
 ## Why this project exists
 
 Many transcription tools (for example Microsoft Teams) rely on **cloud processing**, meaning audio recordings are sent to external services.
-
 For organisations and individuals concerned with **privacy and data sovereignty**, this can be undesirable.
-
 At the same time, a growing ecosystem of **local speech-to-text engines** has emerged that can run entirely on personal hardware.
-
 TranscribeBench exists to answer a practical question:
 
 > Which local transcription engine performs best?
@@ -51,7 +97,6 @@ AutoTranscribe2 aims to provide a **fully local transcription pipeline** where a
 ## Hardware requirements
 
 TranscribeBench runs transcription models locally. Hardware requirements therefore depend on the models you benchmark.
-
 The current setup is primarily tested on:
 
 * **Apple Silicon Macs (M1 / M2 / M3 / M4)**
@@ -68,6 +113,24 @@ Python: 3.13
 
 Some engines in this repository use the **MLX runtime**, which is optimized for Apple Silicon GPUs.
 
+Apple's native `apple_speech` engine requires **macOS 26+** and the built-in Speech framework assets for the configured locale.
+Building the helper also requires a Swift toolchain that matches the installed macOS 26 SDK.
+
+Apple support currently splits into two distinct paths in this repo:
+
+- `apple_speech`: `SpeechTranscriber`-based
+- `apple_dictation`: `DictationTranscriber`-based
+
+On this machine, Dutch (`nl-NL`) works through `apple_dictation`.
+
+Engine ownership and maintainership:
+
+- Apple owns `apple_dictation`
+- OpenAI owns the Whisper model family
+- SYSTRAN maintains `faster-whisper`
+- Georgi Gerganov maintains `whisper.cpp`
+- NVIDIA owns the Parakeet model family
+
 Typical model sizes:
 
 | Model             | Size    |
@@ -78,42 +141,6 @@ Typical model sizes:
 Allow roughly **10–15 GB disk space** for models and dataset caches.
 
 More details are available in the Wiki.
-
----
-
-## Quick Start
-
-Clone the repository:
-
-```
-git clone https://github.com/okkie2/transcribebench
-cd transcribebench
-```
-
-Install the tool:
-
-```
-pip install -e .
-```
-
-Start the interactive CLI:
-
-```
-make menu
-```
-
-You will see:
-
-```
-TranscribeBench Menu
-
-1. Run benchmark
-2. Set sample size
-3. Select engines
-4. Show status
-5. Open most recent report
-6. Exit
-```
 
 ---
 
@@ -136,6 +163,8 @@ artifacts/results/latest/results.json
 artifacts/reports/latest/report.md
 artifacts/reports/latest/results.csv
 ```
+
+`report.md` now starts with a compact benchmark metadata table followed by the per-engine/model overview table.
 
 ---
 
@@ -179,6 +208,8 @@ More detailed documentation is available in the Wiki:
 * Dataset adapters
 * Engine integrations
 
+Apple Speech setup notes and engine behavior are documented in the Wiki pages under `docs/`.
+
 The Markdown files in `docs/` can be used directly as GitHub Wiki pages.
 
 ---
@@ -209,5 +240,6 @@ Contributions are welcome, particularly in:
 
 ## License
 
-See the repository license file.
+See [LICENSE.md](/Users/joostokkinga/Code/TranscribeBench/LICENSE.md).
 
+Third-party acknowledgements are listed in [ATTRIBUTIONS.md](/Users/joostokkinga/Code/TranscribeBench/ATTRIBUTIONS.md).

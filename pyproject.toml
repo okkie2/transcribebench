@@ -14,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 transcribebench = "transcribebench.cli:main"
+TranscribeBench = "transcribebench.cli:main"
 
 [project.urls]
 "Source" = "https://example.com/TranscribeBench"

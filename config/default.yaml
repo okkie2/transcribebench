@@ -1,7 +1,7 @@
 language: nl
 dataset:
   provider: common_voice
-  sample_size: 5
+  sample_size: 150
   seed: 42
   url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
 engines:
@@ -16,16 +16,16 @@ engines:
   enabled: true
 - engine: faster_whisper
   model: guillaumekln/faster-whisper-small
-  enabled: true
+  enabled: false
 - engine: faster_whisper_large
   model: guillaumekln/faster-whisper-large-v2
-  enabled: true
+  enabled: false
 - engine: whisper_cpp
   model: large-v1
-  enabled: true
+  enabled: false
 - engine: parakeet_mlx
   model: mlx-community/parakeet-tdt-0.6b-v3
-  enabled: true
+  enabled: false
 output:
   results_dir: artifacts/results/latest
   reports_dir: artifacts/reports/latest

@@ -1,2 +1,3 @@
 [console_scripts]
+TranscribeBench = transcribebench.cli:main
 transcribebench = transcribebench.cli:main

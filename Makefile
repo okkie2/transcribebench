@@ -35,7 +35,7 @@ run:
 bench: run
 
 menu:
-	$(PYTHON) -m transcribebench.cli --config $(CONFIG)
+	./TranscribeBench menu
 
 report:
 	$(PYTHON) -m transcribebench.cli --config $(CONFIG) report

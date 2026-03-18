@@ -403,6 +403,27 @@ def _open_most_recent_report(config_path: str) -> None:
         return
 
     print(f"Most recent report: {report_path}")
+    absolute_report_path = str(report_path.resolve())
+
+    open_attempts: list[list[str]]
+    if sys.platform == "darwin":
+        open_attempts = [["open", absolute_report_path], ["open", "-t", absolute_report_path]]
+    elif sys.platform.startswith("linux"):
+        open_attempts = [["xdg-open", absolute_report_path]]
+    elif sys.platform == "win32":
+        open_attempts = [["cmd", "/c", "start", "", absolute_report_path]]
+    else:
+        open_attempts = []
+
+    for cmd in open_attempts:
+        try:
+            subprocess.run(cmd, check=True)
+            return
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            continue
+
+    print("Could not open the report in a desktop application. Showing the file contents instead.")
+
     print("\n--- report.md ---\n")
     print(report_path.read_text(encoding="utf-8"))
 
