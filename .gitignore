@@ -16,6 +16,8 @@ venv/
 # Output
 output/
 results/
+!artifacts/results/
+!artifacts/results/**
 
 # Rebuildable cache
 .cache/

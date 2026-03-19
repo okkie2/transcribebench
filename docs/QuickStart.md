@@ -64,6 +64,11 @@ Benchmark run outputs:
 - `artifacts/reports/latest/report.md`
 - `artifacts/reports/latest/results.csv`
 
+`latest` is intended for the current working run. For a benchmark you want to keep in git, use a dated archive location such as:
+- `artifacts/results/archive/runs_200_nl_2026-03-19/results.json`
+- `artifacts/reports/archive/reports_200_nl_2026-03-19/report.md`
+- `artifacts/reports/archive/reports_200_nl_2026-03-19/results.csv`
+
 `report.md` contains:
 - a compact benchmark metadata table
 - a per engine/model overview table with WER, CER, and time

@@ -1,0 +1,37 @@
+# Benchmark config with 200 samples archived under a dated snapshot
+
+language: nl
+
+dataset:
+  provider: common_voice
+  sample_size: 200
+  seed: 42
+  url: file:///Users/joostokkinga/Downloads/cv-corpus-24.0-2025-12-05-nl.tar.gz
+
+engines:
+  - engine: apple_dictation
+    model: nl-NL
+    enabled: true
+  - engine: apple_speech
+    model: nl-NL
+    enabled: false
+  - engine: mlx_whisper
+    model: mlx-community/whisper-large-v3-turbo
+    enabled: true
+  - engine: faster_whisper
+    model: guillaumekln/faster-whisper-small
+    enabled: true
+  - engine: faster_whisper_large
+    model: guillaumekln/faster-whisper-large-v2
+    enabled: true
+  - engine: whisper_cpp
+    model: large-v1
+    enabled: true
+  - engine: parakeet_mlx
+    model: mlx-community/parakeet-tdt-0.6b-v3
+    enabled: true
+
+output:
+  results_dir: artifacts/results/archive/runs_200_nl_2026-03-19
+  reports_dir: artifacts/reports/archive/reports_200_nl_2026-03-19
+  dataset_cache: .cache/datasets

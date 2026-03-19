@@ -150,6 +150,21 @@ artifacts/reports/latest/report.md
 artifacts/reports/latest/results.csv
 ```
 
+`latest` is the mutable working location for the most recent run. If you want to keep a benchmark snapshot in git, copy or write it to a dated archive path such as:
+
+```text
+artifacts/results/archive/runs_200_nl_2026-03-19/results.json
+artifacts/reports/archive/reports_200_nl_2026-03-19/report.md
+artifacts/reports/archive/reports_200_nl_2026-03-19/results.csv
+artifacts/reports/archive/reports_200_nl_2026-03-19/report.pdf
+```
+
+This repository now includes a dated example config for that pattern:
+
+```text
+config/benchmark_200_2026-03-19.yaml
+```
+
 `report.md` now starts with a compact benchmark metadata table followed by the per-engine/model overview table.
 
 ---

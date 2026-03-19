@@ -186,6 +186,14 @@ Each benchmark run produces three main outputs:
 - `artifacts/reports/.../results.csv`
 - `artifacts/reports/.../report.md`
 
+By convention in this repository:
+
+- `artifacts/results/latest` and `artifacts/reports/latest` hold the most recent mutable run
+- `artifacts/results/archive/...` and `artifacts/reports/archive/...` hold named snapshots you want to keep
+- dated paths such as `runs_200_nl_2026-03-19` make later comparisons much easier than generic names such as `runs_200`
+
+When you want a benchmark snapshot to be reproducible and commit-friendly, prefer a dated config file that writes directly to matching archive directories.
+
 ### `results.json`
 
 This is the canonical machine-readable run artifact. It contains:
