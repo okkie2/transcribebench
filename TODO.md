@@ -7,7 +7,7 @@ Current release baseline: `v1.0.0`
 
 ## Target v1.0.1
 - Define and document a lightweight major/minor/patch versioning policy for the repository
-- Add `CHANGELOG.md` with an `Unreleased` section and versioned release entries
+- Add `CHANGELOG.md` with versioned release entries only
 - Add `RELEASE_NOTES.md` with a small per-release summary template
 - Improve CLI transparency when downloading speech models by printing a clear pre-download message with engine, model name, and approximate size when known
 

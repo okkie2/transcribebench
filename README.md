@@ -215,6 +215,24 @@ The Markdown files in `docs/` can be used directly as GitHub Wiki pages.
 
 ---
 
+## Versioning
+
+TranscribeBench uses major/minor/patch version numbers.
+
+- patch: fixes, documentation improvements, and small non-breaking workflow changes
+- minor: new benchmark capabilities, new engine integrations, and other additive features
+- major: breaking changes to config, CLI behavior, or artifact layout
+
+This repository treats the commit that bumps the project version as the release boundary on `main`.
+In practice that means:
+
+- ordinary commits on `main` are ongoing work
+- the commit that changes the version marks the next release
+- `CHANGELOG.md` groups shipped changes under versioned sections only
+- `RELEASE_NOTES.md` summarizes those same versioned releases for readers
+
+---
+
 ## Project status
 
 This project is experimental.
